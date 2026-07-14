@@ -11,16 +11,16 @@ on:
         description: "Feature Set"
         required: false
         type: string
-      ksu_branch:
-        description: "KernelSU branch or commit (empty = latest dev)"
+      use_repo:
+        description: "Use repo for downloading kernel source"
         required: false
-        type: string
-        default: ""
-      susfs_commit:
-        description: "SUSFS commit hash (empty = latest on auto-derived branch)"
+        type: boolean
+        default: false
+      use_latest_commits:
+        description: "Use branch tip for KernelSU and SUSFS instead of pinned commits"
         required: false
-        type: string
-        default: ""
+        type: boolean
+        default: true
 
 jobs:
   generate-matrix:
@@ -29,7 +29,7 @@ jobs:
       matrix: ${{ steps.final.outputs.matrix }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
 
       - name: Read Config and Build Final Matrix
         id: final
@@ -92,6 +92,6 @@ jobs:
       os_patch_level: ${{ matrix.os_patch_level }}
       variant: ${{ matrix.variant }}
       feature_set: ${{ inputs.feature_set }}
-      ksu_branch: ${{ inputs.ksu_branch }}
-      susfs_commit: ${{ inputs.susfs_commit }}
+      use_repo: ${{ inputs.use_repo }}
+      use_latest_commits: ${{ inputs.use_latest_commits }}
     secrets: inherit

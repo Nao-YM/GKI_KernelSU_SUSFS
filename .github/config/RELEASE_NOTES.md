@@ -1,5 +1,3 @@
-# Wild Kernels for GKI2 Devices 5.10+ Release #
-
 **IMPORTANT DISCLAIMER**
 
 > [!CAUTION]
@@ -12,13 +10,9 @@ Join the telegram here: https://t.me/WildKernelsTG
 - [SUSFS v2.2.0](#susfs-v220)
 - [Baseband Guard (BBG)](#baseband-guard-bbg)
 - [DroidSpaces-OSS](#droidspaces-oss)
-- [Networking Improvements](#networking-improvements)
-- [NTSync](#ntsync)
-- [Misc](#misc)
+- [Networking Improvements](#networking)
 
-<!-- NOTE: Anchor links above must match the heading IDs below. GitHub Flavored Markdown auto-generates anchors from heading text, but since these headings contain links, we use explicit IDs for reliable navigation. -->
-
-## [KernelSU-Next](https://github.com/pershoot/KernelSU-Next) {#kernelsu-next}
+## [KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next)
 
 A kernel-based root solution for Android devices.
 
@@ -42,7 +36,7 @@ Manager: {{KSU_MANAGER}}
 **Commit**  
 `{{KSUN_COMMIT}}`
 
-## [SUSFS v2.2.0](https://gitlab.com/simonpunk/susfs4ksu) {#susfs-v220}
+## [SUSFS v2.2.0](https://gitlab.com/simonpunk/susfs4ksu)
 
 A KSU addon for hiding root using kernel patches and a userspace module!
 
@@ -59,48 +53,25 @@ Reccomended Module: [susfs4ksu-module by sidex15](https://github.com/sidex15/sus
 
 {{SUSFS_BRANCHES}}
 
-## [Baseband Guard (BBG)](https://github.com/vc-teahouse/Baseband-guard) {#baseband-guard-bbg}
+## [Baseband Guard (BBG)](https://github.com/vc-teahouse/Baseband-guard)
 
 A lightweight LSM (Linux Security Module) for the Android kernel, designed to block unauthorized writes to critical partitions/device nodes at the system level.
 
-## [DroidSpaces-OSS](https://github.com/ravindu644/Droidspaces-OSS) {#droidspaces-oss}
+## [DroidSpaces-OSS](https://github.com/ravindu644/Droidspaces-OSS)
 
 A lightweight, LXC-inspired container runtime for Android and Linux. Run full Linux distributions natively with zero performance penalty.
 
-## Networking {#networking-improvements}
+## Networking
 
 - BBRv1 - Improved TCP congestion control
-- BBRv3 - Improved TCP congestion control (coming soon!)
 - Wireguard - Built-in VPN support
 - IP Set & IPv6 NAT Support - Advanced firewall capabilities
 - TTL Target Support - Network packet manipulation
-- CAKE, fq, fq_codel - Traffic shaping and fair queuing for reduced lag and balanced bandwidth
-- connmark - Connection marking for packet classification
-- TCP congestion control - CUBIC, BIC, Westwood, and HTCP for optimized performance across different network conditions
 
 ## Other Features
 
 - TMPFS_XATTR - Extended attributes for tmpfs (Mountify support)
 - TMPFS_POSIX_ACL - POSIX ACLs for tmpfs
-
-## [NTSync](#ntsync) {#ntsync}
-
-Provide high-performance, low-latency synchronization primitives compatible with the Windows NT kernel API
-
-## [Misc](#misc) {#misc}
-
-- Ptrace Leak Fix: For kernels < 5.16
-- Unicode Fix: Prevent path traversal and other detections using non-printable Unicode codepoints [Experimental]
-- TMPFS_XATTR: Extended attributes for tmpfs (Mountify support)
-- TMPFS_POSIX_ACL: POSIX ACLs for tmpfs
-
-## Changelog
-
-### This Release
-- Added BBRv3 (delayed)
-- Added NTSync
-- Ptrace Leak Fix - For kernels < 5.16
-- Unicode Fix - Prevent path traversal and other detections using non-printable Unicode codepoints [Experimental]
 
 ## Recommended Tools
 
