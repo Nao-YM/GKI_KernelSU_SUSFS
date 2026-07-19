@@ -2,10 +2,10 @@
 
 > [!CAUTION]
 > This software is provided for testing and educational purposes only. Use at your own risk. The developers are not responsible for any damage, data loss, or issues that may occur. Please ensure you have proper backups before installation.
-
-Join the telegram here: https://t.me/WildKernelsTG
+# Wild Kernels Fork for GKI2 Devices 5.10+ Release 6
 
 # Features
+## From Wild Kernels
 - [KernelSU-Next](#kernelsu-next)
 - [SUSFS v2.2.0](#susfs-v220)
 - [Baseband Guard (BBG)](#baseband-guard-bbg)
@@ -13,6 +13,11 @@ Join the telegram here: https://t.me/WildKernelsTG
 - [Networking Improvements](#networking)
 - [NTSync](#ntsync)
 - [Misc](#misc)
+## From MomenToMoiX GKI Kernel
+- [MomenToMoiX Driver](#momentomoix-driver)
+- [Memory Management](#memory-management)
+- [Power Management](#power-management)
+- [Scheduler & I/O](#scheduler--io)
 
 ## [KernelSU-Next](https://github.com/pershoot/KernelSU-Next)
 
@@ -27,16 +32,16 @@ Manager: {{KSU_MANAGER}}
 > For best compatiblity ensure your Manager Version and Kernel Version match eg. 30100 = 30100.
 
 **Version**  
-`{{KSU_VERSION}}`
+`33225`
 
 **Tag**  
-`{{KSU_GIT_TAG}}`
+`v3.3.0`
 
 **Branch**  
-`{{KSUN_BRANCH}}`
+`dev-susfs`
 
 **Commit**  
-`{{KSUN_COMMIT}}`
+`032b799f2a4dbd2235fc462cadacbdfd7bffef33`
 
 ## [SUSFS v2.2.0](https://gitlab.com/simonpunk/susfs4ksu)
 
@@ -53,7 +58,8 @@ Reccomended Module: [susfs4ksu-module by sidex15](https://github.com/sidex15/sus
 - SUS_MAP - Memory mapping protection
 - AVC_SPOOF - Spoof procfs avc denial logs
 
-{{SUSFS_BRANCHES}}
+**Commit**  
+`a53475a4399f5b19b656dca28b26fff208f47df4`
 
 ## [Baseband Guard (BBG)](https://github.com/vc-teahouse/Baseband-guard)
 
@@ -98,6 +104,64 @@ Provide high-performance, low-latency synchronization primitives compatible with
 - Ptrace Leak Fix - For kernels < 5.16
 - Unicode Fix - Prevent path traversal and other detections using non-printable Unicode codepoints [Experimental]
 
+## MomenToMoiX Driver
+
+A smart, adaptive kernel-level optimization driver. It dynamically scales CPU behavior, frequencies, and I/O scheduling in real-time based on Screen State (ON/OFF) and Charging Status.
+
+**How it works:**
+
+- **Screen OFF (Battery Saver):** Isolates background apps to power-efficient cores (CPU 0), caps max frequency (with a separate bias for charging vs. non-charging states), switches the I/O scheduler to a low-overhead mode, and arms a thermal hold if the device is running hot — maximizing deep sleep and eliminating idle battery drain.
+- **Screen ON (Instant):** Restores stock kernel profiles within milliseconds for a fluid, lag-free experience the moment the screen turns on. If a thermal hold is active, frequency restrictions are extended briefly until temperatures cool down.
+
+**Requirements:**
+
+MomenToMoiX detects screen state via `fb_notifier` (event-driven) with automatic fallback to sysfs polling. For the sysfs polling fallback to work, your device needs one of these paths:
+
+- DPMS: `/sys/class/drm/card0-DSI-1/dpms`
+- Backlight: `/sys/class/backlight/panel0-backlight/brightness`
+
+**Verify it's running:**
+
+```bash
+su -c 'dmesg -w | grep momx'
+```
+after the device finishes booting.
+
+Based on `https://github.com/LoggingNewMemory/SuiKernel-Release`'s Tenebrion logic and SELinux rules.
+
+## Memory Management
+
+- MGLRU (Multi-Generational LRU)
+- ZRAM with ZSTD compression support
+- ZSMALLOC
+- KSM (Kernel Samepage Merging)
+- Compaction & Migration
+- Transparent Huge Pages (THP)
+
+## Power Management
+
+- TEO Idle Governor
+- WQ_POWER_EFFICIENT
+- SCHED_MC
+- NO_HZ_IDLE
+- Strict 100 max wakelocks limit with automated GC
+
+## Scheduler & I/O
+
+- Full Preemption (CONFIG_PREEMPT)
+- BFQ I/O Scheduler (with Group IOSCHED)
+- MQ-Deadline
+- TCP FastOpen
+
+## Other Features
+
+- Full LTO (Link Time Optimization) builds
+- Google Common Kernel LTS tracking
+
+## Big Thanks
+
+https://github.com/LoggingNewMemory/SuiKernel-Release — Tenebrion logic and SELinux rules
+
 ## Recommended Tools
 
 [Kernel Flasher](https://github.com/fatalcoder524/KernelFlasher)
@@ -125,17 +189,8 @@ Install the KernelSU‑Next Manager APK, same version as mentioned in the releas
 Open the KernelSU‑Next app.
 Reboot the device if you performed any cleanup in step 2
 
-## Force Load Kernel Modules (Bypass) — flashing with `Bypass-Image`
+---
 
-> [!IMPORTANT]
-> Most users do not need this. This option does not help bypass root-detection systems — it only replaces the kernel image used during flashing for compatibility workarounds.
+Wild Kernels Fork is based on and developed from [WildKernels/GKI_KernelSU_SUSFS](https://github.com/WildKernels/GKI_KernelSU_SUSFS)  
+@koneko_dev [t.me/Koneko_dev](https://t.me/Koneko_dev)
 
-**How to enable:**
-- Set `do.flash_bypass=1`, in the anykernel.sh file within the AnyKernel3.zip. 
-
-**Behavior:**
-- If `do.flash_bypass=1` is set it will move `Bypass-Image` to replace the usual `Image` file prior to performing version checks and flashing.
-- If `do.flash_bypass=1` is set and `Bypass-Image` is not found, the installer will abort with an error to avoid accidental forced flashing of an unintended image.
-
-**Why / When to use:**
-- Use this only when a `Normal` flash fails to boot due to kernel module incompatibilities.
