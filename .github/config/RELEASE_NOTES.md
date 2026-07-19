@@ -58,8 +58,7 @@ Reccomended Module: [susfs4ksu-module by sidex15](https://github.com/sidex15/sus
 - SUS_MAP - Memory mapping protection
 - AVC_SPOOF - Spoof procfs avc denial logs
 
-**Commit**  
-`a53475a4399f5b19b656dca28b26fff208f47df4`
+{{SUSFS_BRANCHES}}
 
 ## [Baseband Guard (BBG)](https://github.com/vc-teahouse/Baseband-guard)
 
