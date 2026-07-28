@@ -155,7 +155,8 @@ runs:
       working-directory: ${{ github.workspace }}
       run: |
         set -euo pipefail
-        patch -p1 --forward < "${{ github.action_path }}/patches/tenebrion/tenebrion.patch"
+        echo ${{ github.action_path }}
+        # patch -p1 --forward < "${{ github.action_path }}/patches/tenebrion/tenebrion.patch"
 
         echo "Inject MomenToMoiX SELinux Rules successfully."
 
