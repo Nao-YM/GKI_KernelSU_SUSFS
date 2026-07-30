@@ -144,7 +144,7 @@ runs:
 
     - name: 'Inject MomenToMoiX SELinux Rules'
       shell: bash
-      working-directory: ${{ github.workspace }}/kernel/common
+      working-directory: ${{ github.workspace }}/kernel/
       run: |
         set -euo pipefail
         patch -p1 --forward < "${{ github.action_path }}/patches/tenebrion/tenebrion.patch"
