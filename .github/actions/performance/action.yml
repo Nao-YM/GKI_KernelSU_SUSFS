@@ -144,7 +144,7 @@ runs:
 
     - name: 'Inject MomenToMoiX SELinux Rules'
       shell: bash
-      working-directory: ${{ github.workspace }}/kernel/
+      working-directory: ${{ github.workspace }}
       run: |
         set -euo pipefail
         apt install tree -y
