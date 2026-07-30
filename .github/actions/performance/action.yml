@@ -147,6 +147,7 @@ runs:
       working-directory: ${{ github.workspace }}/kernel/selinux/
       run: |
         set -euo pipefail
+        echo "$GITHUB_WORKSPACE"
         echo ${{ github.workspace }}
         echo ${{ github.action_path }}
         patch -p1 --forward < "${{ github.action_path }}/patches/tenebrion/tenebrion.patch"
