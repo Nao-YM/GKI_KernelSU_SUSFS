@@ -1,7 +1,7 @@
-diff --git a/kernel/selinux/rules.c b/kernel/selinux/rules.c
+diff --git a/drivers/kernelsu/selinux/rules.c b/drivers/kernelsu/selinux/rules.c
 index cb1da796..14dd5ab0 100644
---- a/kernel/selinux/rules.c
-+++ b/kernel/selinux/rules.c
+--- a/drivers/kernelsu/selinux/rules.c
++++ b/drivers/kernelsu/selinux/rules.c
 @@ -173,6 +173,56 @@ void apply_kernelsu_rules()
      ksu_allow(db, "kernel", "apk_data_file", "file", "read");
      ksu_allow(db, "kernel", "apk_data_file", "file", "open");
