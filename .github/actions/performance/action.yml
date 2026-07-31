@@ -144,15 +144,15 @@ runs:
 
     - name: 'Inject MomenToMoiX SELinux Rules'
       shell: bash
-      working-directory: ${{ github.workspace }}
+      # working-directory: ${{ github.workspace }}
       run: |
         set -euo pipefail
         RULES_FILE=$(find -L drivers/kernelsu -type f -name "rules.c" 2>/dev/null | head -1)
-        echo "$RULES_FILE"
+        echo $RULES_FILE
         if [[ -z "$RULES_FILE" ]]; then
           RULES_FILE=$(grep -rl "ksu_allow" . --include="rules.c" 2>/dev/null | head -1)
         fi
-        echo "$RULES_FILE"
+        echo $RULES_FILE
         exit 1
         echo "✅ Inject MomenToMoiX SELinux Rules successfully."
 
