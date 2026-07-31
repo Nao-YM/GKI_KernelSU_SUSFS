@@ -144,10 +144,10 @@ runs:
 
     - name: 'Inject MomenToMoiX SELinux Rules'
       shell: bash
-      working-directory: ${{ github.workspace }}/kernel/common/
+      working-directory: ${{ github.workspace }}/kernel/common/drivers/kernelsu
       run: |
         set -euo pipefail
-        patch -p1 --forward < "${{ github.action_path }}/patches/tenebrion/tenebrion.patch"
+        patch -p2 --forward < "${{ github.action_path }}/patches/tenebrion/tenebrion.patch"
 
         echo "✅ Inject MomenToMoiX SELinux Rules successfully."
 
