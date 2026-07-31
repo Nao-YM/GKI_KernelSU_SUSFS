@@ -144,20 +144,10 @@ runs:
 
     - name: 'Inject MomenToMoiX SELinux Rules'
       shell: bash
-      working-directory: ${{ github.workspace }}/kernel/common
+      working-directory: ${{ github.workspace }}/kernel/common/drivers/kernelsu/selinux
       run: |
         set -euo pipefail
-        RULES_FILE=$(find -L drivers/kernelsu -type f -name "rules.c" 2>/dev/null | head -1)
-        echo "1st attempt to find rules.c: $RULES_FILE"
-        echo "$RULES_FILE"
-        if [[ -z "$RULES_FILE" ]]; then
-          RULES_FILE=$(grep -rl "ksu_allow" . --include="rules.c" 2>/dev/null | head -1)
-        fi
-        echo "2nd attempt to find rules.c: $RULES_FILE"
-        echo "$RULES_FILE"
-        if [[ -z "$RULES_FILE" ]]; then
-          exit 1
-        fi
-        exit 1
+        patch -p1 --forward < "${{ github.action_path }}/patches/tenebrion/tenebrion.patch"
+
         echo "✅ Inject MomenToMoiX SELinux Rules successfully."
 
