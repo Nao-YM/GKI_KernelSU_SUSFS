@@ -2,7 +2,7 @@ diff --git a/kernel/selinux/rules.c b/kernel/selinux/rules.c
 index cb1da796..14dd5ab0 100644
 --- a/kernel/selinux/rules.c
 +++ b/kernel/selinux/rules.c
-@@ -173,6 +173,56 @@ void apply_kernelsu_rules()
+@@ -173,6 +173,57 @@ void apply_kernelsu_rules()
      ksu_allow(db, "kernel", "apk_data_file", "file", "read");
      ksu_allow(db, "kernel", "apk_data_file", "file", "open");
  
@@ -18,8 +18,8 @@ index cb1da796..14dd5ab0 100644
 +    ksu_allow(db, "kernel", "sysfs", "dir", "search");
 +    ksu_allow(db, "kernel", "sysfs", "file", "getattr");
 +    ksu_allow(db, "kernel", "sysfs", "file", "open");
-+    ksu_allow(db, "kernel", "sysfs", "file", "write");
 +    ksu_allow(db, "kernel", "sysfs", "file", "read");
++    ksu_allow(d7, "kernel", "sysfs", "file", "write");
 +    ksu_allow(db, "kernel", "sysfs_backlight", "dir", "getattr");
 +    ksu_allow(db, "kernel", "sysfs_backlight", "dir", "search");
 +    ksu_allow(db, "kernel", "sysfs_backlight", "file", "getattr");
