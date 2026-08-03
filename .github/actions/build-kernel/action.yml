@@ -212,7 +212,6 @@ runs:
         fi
 
         cat /home/runner/out/common/.config || true
-
     - name: 'Gather Build Artifacts'
       shell: bash
       working-directory: ${{ github.workspace }}
@@ -227,8 +226,8 @@ runs:
             echo "Kernel Version:"
             strings "/home/runner/out/dist/Image" | grep -m1 "^Linux version "
           fi
-            exit 0
-          fi
+          exit 0
+        fi
         if [ -f "/home/runner/out/Image" ]; then
           echo "Found Image at /home/runner/out/Image"
           if [[ ${{ inputs.bypass }} == "true" ]]; then
