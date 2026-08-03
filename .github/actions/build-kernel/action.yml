@@ -163,6 +163,44 @@ runs:
           fi
         done
 
+    - name: 'Inject Bara-no-Seidou Governor'
+      shell: bash
+      run: |
+        set -euo pipefail
+        TARGET_DIR="$GITHUB_WORKSPACE/kernel/common"
+
+        mkdir -p "$TARGET_DIR/kernel/sched"
+        cp "${{ github.action_path }}/patches/bara-no-seidou/cpufreq_bara_no_seidou.c" "$TARGET_DIR/kernel/sched/cpufreq_bara_no_seidou.c"
+
+        if ! grep -q "cpufreq_bara_no_seidou.o" "$TARGET_DIR/kernel/sched/Makefile"; then
+          echo 'obj-$(CONFIG_CPU_FREQ_GOV_BARA_NO_SEIDOU) += cpufreq_bara_no_seidou.o' >> "$TARGET_DIR/kernel/sched/Makefile"
+        fi
+
+        if ! grep -q "config CPU_FREQ_GOV_BARA_NO_SEIDOU" "$TARGET_DIR/drivers/cpufreq/Kconfig"; then
+          printf "\nconfig CPU_FREQ_GOV_BARA_NO_SEIDOU\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
+          printf "\ttristate \"'bara-no-seidou' cpufreq governor\"\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
+          printf "\tdepends on CPU_FREQ && SMP && INPUT\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
+          printf "\tselect CPU_FREQ_GOV_ATTR_SET\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
+          printf "\thelp\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
+          printf "\t  'bara-no-seidou' is a schedutil-based governor tuned for\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
+          printf "\t  battery efficiency with an automatic gaming-mode switch,\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
+          printf "\t  touch-boost smoothing, and PSI-aware tuning.\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
+        fi
+
+        DEFCONFIG_GKI="$TARGET_DIR/arch/arm64/configs/gki_defconfig"
+        if [ -f "$DEFCONFIG_GKI" ] && ! grep -q "CONFIG_CPU_FREQ_GOV_BARA_NO_SEIDOU" "$DEFCONFIG_GKI"; then
+          echo "CONFIG_CPU_FREQ_GOV_BARA_NO_SEIDOU=y" >> "$DEFCONFIG_GKI"
+        fi
+
+        if ! grep -q "cpufreq_bara_no_seidou.o" "$TARGET_DIR/kernel/sched/Makefile"; then
+          echo "ERROR: failed to wire cpufreq_bara_no_seidou.o into sched/Makefile" >&2
+          exit 1
+        fi
+        if ! grep -q "config CPU_FREQ_GOV_BARA_NO_SEIDOU" "$TARGET_DIR/drivers/cpufreq/Kconfig"; then
+          echo "ERROR: failed to inject CPU_FREQ_GOV_BARA_NO_SEIDOU Kconfig entry" >&2
+          exit 1
+        fi
+
     - name: Setup Kernel Configs
       if: false
       uses: ./.github/actions/set-kernel-config
@@ -212,6 +250,7 @@ runs:
         fi
 
         cat /home/runner/out/common/.config || true
+
     - name: 'Gather Build Artifacts'
       shell: bash
       working-directory: ${{ github.workspace }}
@@ -226,8 +265,8 @@ runs:
             echo "Kernel Version:"
             strings "/home/runner/out/dist/Image" | grep -m1 "^Linux version "
           fi
-          exit 0
-        fi
+            exit 0
+          fi
         if [ -f "/home/runner/out/Image" ]; then
           echo "Found Image at /home/runner/out/Image"
           if [[ ${{ inputs.bypass }} == "true" ]]; then
