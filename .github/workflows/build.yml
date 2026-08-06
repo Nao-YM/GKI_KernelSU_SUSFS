@@ -188,6 +188,9 @@ jobs:
       with:
         kernel_version: ${{ inputs.kernel_version }}
 
+    - name: Add Governors
+      uses: ./.github/actions/governor    
+
     - name: Setup Misc Configs
       uses: ./.github/actions/misc
 
