@@ -40,11 +40,11 @@ jobs:
   build-gki:
     name: "${{ inputs.kernel_version }}.${{ inputs.sublevel }}-${{ inputs.android_version }}-${{ inputs.os_patch_level }} (${{ inputs.variant }})"
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v7
 
     - name: 🧹 Emergency Disk Cleanup
       if: false
@@ -83,6 +83,14 @@ jobs:
         android_version: ${{ inputs.android_version }}
         kernel_version: ${{ inputs.kernel_version }}
         os_patch_level: ${{ inputs.os_patch_level }}
+
+    - name: Build FUSE-BPF Userspace Daemon (Issue #211)
+      if: ${{ contains(inputs.version, 'lts') && inputs.version == 'android16-6.12' }}
+      uses: ./.github/actions/fuse-bpf
+      with:
+        version: ${{ inputs.version }}
+        kernel_version: ${{ inputs.kernel_version }}
+        android_version: ${{ inputs.android_version }}
 
     - name: Set Build Timestamp from Kernel Commit
       shell: bash
@@ -267,7 +275,7 @@ jobs:
     - name: Restore ccache
       id: restore-ccache
       continue-on-error: true
-      if: inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15'
+      if: false && (inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15')
       uses: ./.github/actions/cache-restore
       with:
         cache_path: /home/runner/.ccache
@@ -276,22 +284,10 @@ jobs:
         restore_keys: |
           ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
 
-    - name: Restore lto-cache (ccache versions)
-      id: restore-lto-ccache
-      continue-on-error: true
-      if: inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15'
-      uses: ./.github/actions/cache-restore
-      with:
-        cache_path: /home/runner/.ld_cache
-        cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
-        cache_bucket: lto-cache
-        restore_keys: |
-          ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
-
     - name: Restore bazel-cache
       id: restore-bazel
       continue-on-error: true
-      if: inputs.version == 'android14-5.15' || inputs.version == 'android14-6.1' || inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12'
+      if: false && (inputs.version == 'android14-5.15' || inputs.version == 'android14-6.1' || inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12')
       uses: ./.github/actions/cache-restore
       with:
         cache_path: /home/runner/.cache/bazel
@@ -300,17 +296,33 @@ jobs:
         restore_keys: |
           ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
 
+    - name: Cache ccache (GitHub Native)
+      uses: actions/cache@v6
+      with:
+        path: /home/runner/.ccache
+        key: ccache-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
+        restore-keys: |
+          ccache-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
+          ccache-${{ inputs.android_version }}-${{ inputs.kernel_version }}-
+          ccache-
+
+    - name: Cache bazel-cache (GitHub Native)
+      uses: actions/cache@v6
+      with:
+        path: /home/runner/.cache/bazel
+        key: bazel-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
+        restore-keys: |
+          bazel-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
+          bazel-${{ inputs.android_version }}-${{ inputs.kernel_version }}-
+          bazel-
+
     - name: Check cache hit
       run: |
         echo "Cache restore status:"
         CCACHE_HIT="${{ steps.restore-ccache.outputs.cache-hit || 'skipped' }}"
-        LTO_CCACHE_HIT="${{ steps.restore-lto-ccache.outputs.cache-hit || 'skipped' }}"
         BAZEL_HIT="${{ steps.restore-bazel.outputs.cache-hit || 'skipped' }}"
-        LTO_BAZEL_HIT="skipped"
         echo "  ccache: $CCACHE_HIT"
-        echo "  lto (ccache versions): $LTO_CCACHE_HIT"
         echo "  bazel: $BAZEL_HIT"
-        echo "  lto (bazel versions): $LTO_BAZEL_HIT"
 
     - name: Get Cache Stats
       uses: ./.github/actions/cache-stats
@@ -337,7 +349,7 @@ jobs:
     - name: Save ccache
       continue-on-error: true
       uses: ./.github/actions/cache-save
-      if: inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15'
+      if: false && (inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15')
       with:
         cache_path: /home/runner/.ccache
         cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
@@ -345,21 +357,10 @@ jobs:
         compression_level: 9
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
-    - name: Save lto-cache
-      continue-on-error: true
-      uses: ./.github/actions/cache-save
-      if: inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15'
-      with:
-        cache_path: /home/runner/.ld_cache
-        cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
-        cache_bucket: "lto-cache"
-        compression_level: 9
-        github_token: ${{ secrets.MY_GITHUB_TOKEN }}
-
     - name: Save bazel-cache
       continue-on-error: true
       uses: ./.github/actions/cache-save
-      if:  inputs.version == 'android14-5.15' || inputs.version == 'android14-6.1' || inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12'
+      if: false && (inputs.version == 'android14-5.15' || inputs.version == 'android14-6.1' || inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12')
       with:
         cache_path: /home/runner/.cache/bazel
         cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
@@ -367,14 +368,15 @@ jobs:
         compression_level: 9
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
-#    - name: Build Bypass Kernel
-#      env:
-#        SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
-#        KBUILD_BUILD_TIMESTAMP: ${{ env.KBUILD_BUILD_TIMESTAMP }}
-#      uses: ./.github/actions/build-kernel
-#      with:
-#        bypass: true
-#        version: ${{ inputs.version }}
+    - name: Build Bypass Kernel
+      env:
+        SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
+        KBUILD_BUILD_TIMESTAMP: ${{ env.KBUILD_BUILD_TIMESTAMP }}
+      uses: ./.github/actions/build-kernel
+      if: false
+      with:
+        bypass: true
+        version: ${{ inputs.version }}
 
     - name: 📋 Consolidated Build Summary
       if: ${{ always() }}
