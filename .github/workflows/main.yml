@@ -112,6 +112,7 @@ jobs:
           fi
           echo "::endgroup::"
       - name: Upload ccache artifact
+        if: false
         uses: actions/upload-artifact@v7
         with:
           name: ccache-binary
