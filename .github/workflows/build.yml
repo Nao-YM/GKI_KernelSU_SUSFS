@@ -200,8 +200,6 @@ jobs:
       with:
         kernel_version: ${{ inputs.kernel_version }}
 
-    - name: Add Governors
-      uses: ./.github/actions/governor    
 
     - name: Setup Misc Configs
       uses: ./.github/actions/misc
@@ -247,6 +245,13 @@ jobs:
         android_version: ${{ inputs.android_version }}
         version: ${{ inputs.version }}
         sublevel: ${{ steps.extract.outputs.sublevel }}
+
+
+    - name: Inject MomenToMoiX Drivers
+      uses: ./.github/actions/momentx
+      
+    - name: Add Governors
+      uses: ./.github/actions/governor    
 
     - name: Remove Protected Exports
       uses: ./.github/actions/remove-protected-exports
