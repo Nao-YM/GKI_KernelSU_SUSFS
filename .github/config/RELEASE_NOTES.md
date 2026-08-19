@@ -33,21 +33,22 @@ A kernel-based root solution for Android devices.
 > [!WARNING]
 > This release uses the [pershoot/KernelSU-Next](https://github.com/pershoot/KernelSU-Next) fork. The fork maintainer has said it is not ready for production use, so treat it as use at your own risk.
 
-Manager: 'https://github.com/pershoot/KernelSU-Next/actions/workflows/build-manager-ci.yml'
+Manager: {{KSU_MANAGER}}
+
 > [!IMPORTANT]
 > For best compatiblity ensure your Manager Version and Kernel Version match eg. 30100 = 30100.
 
 **Version**  
-`33252`
+`{{KSU_VERSION}}`
 
 **Tag**  
-`v3.3.0`
+`{{KSU_GIT_TAG}}`
 
 **Branch**  
-`dev-susfs`
+`{{KSUN_BRANCH}}`
 
 **Commit**  
-`1ce76ef55805697fcfa56aa18fb8dacd06b0dafb`
+`{{KSUN_COMMIT}}`
 
 ## [SUSFS v2.2.0](https://gitlab.com/simonpunk/susfs4ksu) {#susfs-v220}
 
