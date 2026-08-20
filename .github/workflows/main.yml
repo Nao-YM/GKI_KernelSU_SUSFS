@@ -15,6 +15,10 @@ on:
           - Pre-Release
           - Release
         default: Action
+      test_release_notes:
+        description: "Test Release Notes Only (no build)"
+        type: boolean
+        default: false
       kernel_build_version:
         description: "Kernel Version"
         type: choice
