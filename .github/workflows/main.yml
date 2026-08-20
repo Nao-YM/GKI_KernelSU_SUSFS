@@ -15,10 +15,6 @@ on:
           - Pre-Release
           - Release
         default: Action
-      test_release_notes:
-        description: "Test Release Notes Only (no build)"
-        type: boolean
-        default: false
       release_tag:
         description: "Release Tag (e.g., r1, r2, etc.)"
         type: string
@@ -103,7 +99,6 @@ jobs:
         if: true
         run: |
           set -uo pipefail
-          echo ${{ github.event_name }}
           echo "::group::Download ccache"
           url="https://raw.githubusercontent.com/WildKernels/kernel_patches/refs/heads/main/ccache/ccache-x86-64"
           ok=0
@@ -387,7 +382,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' && !inputs.test_release_notes && (inputs.release_type == 'Pre-Release' || inputs.release_type == 'Release') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && !inputs.test_release_notes && (inputs.release_type == 'Pre-Release' || inputs.release_type == 'Release')  && always() }}
     permissions:
       contents: write
     needs:
