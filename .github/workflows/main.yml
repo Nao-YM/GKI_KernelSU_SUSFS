@@ -487,9 +487,8 @@ jobs:
         set -euo pipefail
 
         # Format release title: convert rN -> Release N
-        if [[ "${NEW_TAG}" =~ "" ]]; then
+        if [[ "${NEW_TAG}" =~ ^R([0-9]+).*$ ]]; then
           REV_NUM="${BASH_REMATCH[1]}"
-          release_title="Release ${REV_NUM}"
         else
           release_title="Release ${NEW_TAG}"
         fi
@@ -580,7 +579,7 @@ jobs:
         shopt -s nullglob
 
         for dir in release-assets/*-AnyKernel3; do
-          zip_name="${dir}.zip"
+          zip_name="${NEW_TAG}-${dir}-NAO-YM.zip"
           rm -f "$zip_name"
           cd "$dir"
           zip -r -q -9 "../$(basename "$zip_name")" .
@@ -588,7 +587,7 @@ jobs:
         done
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v3
       with:
         tag_name: ${{ steps.tag.outputs.new_tag }}
         name: ${{ steps.release_meta.outputs.release_title }}
