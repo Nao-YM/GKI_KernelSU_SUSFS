@@ -489,6 +489,7 @@ jobs:
         # Format release title: convert rN -> Release N
         if [[ "${NEW_TAG}" =~ ^R([0-9]+).*$ ]]; then
           REV_NUM="${BASH_REMATCH[1]}"
+          release_title="Release ${REV_NUM}"
         else
           release_title="Release ${NEW_TAG}"
         fi
