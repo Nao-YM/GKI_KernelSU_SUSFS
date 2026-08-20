@@ -22,7 +22,8 @@ inputs:
     required: false
     type: boolean
     default: false
-
+permissions:
+  actions: write
 runs:
   using: 'composite'
   steps:

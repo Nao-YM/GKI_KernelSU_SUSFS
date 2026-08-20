@@ -297,7 +297,7 @@ jobs:
       with:
         cache_path: /home/runner/.ccache
         cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
-        cache_bucket: ccache-cache
+        cache_bucket: "ccache-cache"
         restore_keys: |
           ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
 
@@ -309,7 +309,7 @@ jobs:
       with:
         cache_path: /home/runner/.cache/bazel
         cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
-        cache_bucket: bazel-cache
+        cache_bucket: "bazel-cache"
         restore_keys: |
           ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
 
