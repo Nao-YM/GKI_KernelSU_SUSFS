@@ -274,7 +274,7 @@ jobs:
         compression-level: 9
 
     - name: Get prebuilt ccache (downloaded once by prepare-ccache)
-      if: false
+      if: true
       uses: actions/download-artifact@v8
       with:
         name: ccache-binary
@@ -292,7 +292,7 @@ jobs:
     - name: Restore ccache
       id: restore-ccache
       continue-on-error: true
-      if: false && (inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15')
+      if: true && (inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15')
       uses: ./.github/actions/cache-restore
       with:
         cache_path: /home/runner/.ccache
@@ -304,7 +304,7 @@ jobs:
     - name: Restore bazel-cache
       id: restore-bazel
       continue-on-error: true
-      if: false && (inputs.version == 'android14-5.15' || inputs.version == 'android14-6.1' || inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12')
+      if: true && (inputs.version == 'android14-5.15' || inputs.version == 'android14-6.1' || inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12')
       uses: ./.github/actions/cache-restore
       with:
         cache_path: /home/runner/.cache/bazel
@@ -314,7 +314,7 @@ jobs:
           ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
 
     - name: Cache ccache (GitHub Native)
-      if: false
+      if: true
       uses: actions/cache@v6
       with:
         path: /home/runner/.ccache
@@ -325,7 +325,7 @@ jobs:
           ccache-
 
     - name: Cache bazel-cache (GitHub Native)
-      if: false
+      if: true
       uses: actions/cache@v6
       with:
         path: /home/runner/.cache/bazel
@@ -368,7 +368,7 @@ jobs:
     - name: Save ccache
       continue-on-error: true
       uses: ./.github/actions/cache-save
-      if: false && (inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15')
+      if: true && (inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15')
       with:
         cache_path: /home/runner/.ccache
         cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
@@ -379,7 +379,7 @@ jobs:
     - name: Save bazel-cache
       continue-on-error: true
       uses: ./.github/actions/cache-save
-      if: false && (inputs.version == 'android14-5.15' || inputs.version == 'android14-6.1' || inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12')
+      if: true && (inputs.version == 'android14-5.15' || inputs.version == 'android14-6.1' || inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12')
       with:
         cache_path: /home/runner/.cache/bazel
         cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
