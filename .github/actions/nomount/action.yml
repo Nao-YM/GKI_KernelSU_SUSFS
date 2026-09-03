@@ -1,6 +1,21 @@
 name: 'Setup NoMount'
 description: 'Integrate NoMount VFS hooks (pinned SHA or latest dev) and enable CONFIG_NOMOUNT'
 
+inputs:
+  commit:
+    description: 'Full immutable NoMount commit SHA (empty = latest dev branch tip)'
+    required: false
+    default: ''
+  kernel_version:
+    description: 'Kernel major/minor version (for example, 5.10 or 6.6)'
+    required: false
+    default: ''
+
+outputs:
+  commit:
+    description: 'NoMount commit SHA actually integrated'
+    value: ${{ steps.integrate.outputs.commit }}
+
 runs:
   using: composite
   steps:
@@ -12,12 +27,15 @@ runs:
         KERNEL_VERSION: ${{ inputs.kernel_version }}
       run: |
         set -euo pipefail
+
         KERNEL_DIR="${{ github.workspace }}/kernel/common"
         test -d "$KERNEL_DIR/fs" || {
           echo "Kernel source directory does not exist: $KERNEL_DIR" >&2
           exit 1
         }
+
         requested_commit="${{ inputs.commit }}"
+
         if [ -z "$requested_commit" ]; then
           # Float mode: latest dev branch tip, captured at run time
           echo "NoMount: no commit pinned, using latest dev branch tip"
@@ -49,15 +67,17 @@ runs:
             exit 1
           fi
         fi
+
         if [ ! -L "$KERNEL_DIR/fs/nomount" ]; then
           echo "NoMount integration failed: fs/nomount symlink missing" >&2
           exit 1
         fi
+
         echo "commit=$actual_commit" >> "$GITHUB_OUTPUT"
         echo "NOMOUNT_COMMIT=$actual_commit" >> "$GITHUB_ENV"
         echo "NoMount integrated (kernel $KERNEL_VERSION, commit $actual_commit)"
 
-    - name: Enable Kernel Configs
+    - name: Enable NoMount in kernel defconfig
       uses: ./.github/actions/set-kernel-config
       with:
         config_list: |

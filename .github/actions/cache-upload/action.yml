@@ -22,8 +22,7 @@ inputs:
     required: false
     type: boolean
     default: false
-permissions:
-  actions: write
+
 runs:
   using: 'composite'
   steps:
@@ -62,7 +61,7 @@ runs:
                 return 0
               fi
             fi
-            echo "  ⚠ Attempt $i failed. Retrying..."
+            echo "  [!] Attempt $i failed. Retrying..."
             if [ "$i" -lt "$max_attempts" ]; then
               sleep 5
             fi
@@ -93,4 +92,4 @@ runs:
 
         # Final cleanup
         rm -f "${BASE_FILENAME}"* || true
-        echo "✅ Cache upload complete"
+        echo "[+] Cache upload complete"
