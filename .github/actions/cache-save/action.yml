@@ -84,7 +84,7 @@ runs:
         echo "Target: ${{ inputs.cache_path }}"
         
         if [ ! -d "${{ inputs.cache_path }}" ] && [ ! -f "${{ inputs.cache_path }}" ]; then
-          echo "?? Target path not found. Skipping cache save."
+          echo "⚠️ Target path not found. Skipping cache save."
           echo "::endgroup::"
         else
           DIR_NAME=$(dirname "${{ inputs.cache_path }}")
@@ -146,14 +146,14 @@ runs:
                 fi
               fi
               
-              echo "  ? Attempt $i failed or timed out. Retrying..."
+              echo "  ⚠ Attempt $i failed or timed out. Retrying..."
               sleep 5
             done
             return 1
           }
           
           if [ "$FILE_SIZE" -gt "$MAX_SIZE" ]; then
-            echo "? File > 2GB. Splitting..."
+            echo "⚠ File > 2GB. Splitting..."
             split -b 1500M -a 2 "$FILENAME" "${FILENAME}.part"
             
             NEW_PARTS=(${FILENAME}.part*)
