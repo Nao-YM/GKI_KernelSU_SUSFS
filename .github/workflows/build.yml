@@ -251,7 +251,13 @@ jobs:
       uses: ./.github/actions/momentx
       
     - name: Add Governors
-      uses: ./.github/actions/governor    
+      uses: ./.github/actions/governor
+
+    - name: Integrate NoMount
+      uses: ./.github/actions/nomount
+      with:
+        kernel_version: ${{ inputs.kernel_version }}
+        commit: ${{ inputs.susfs_commit }}
 
     - name: Remove Protected Exports
       uses: ./.github/actions/remove-protected-exports
