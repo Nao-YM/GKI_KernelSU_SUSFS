@@ -1010,8 +1010,6 @@ jobs:
     - name: Generate New Tag
       id: tag
       if: inputs.release_type != 'Action'
-      with:
-        release_tag: ${{ inputs.release_tag }}
       run: |
         # mapfile -t RELEASE_TAGS < <(gh api --paginate "repos/${{ github.repository }}/tags?per_page=100" --jq '.[].name' 2>/dev/null | grep -E '^r[0-9]+$' || true)
 
