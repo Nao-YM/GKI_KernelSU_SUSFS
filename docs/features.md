@@ -79,8 +79,18 @@ Kernel-based su and root access management for Android.
 
 | Feature | Description | Source |
 |---------|-------------|--------|
+| MomenToMoiX Driver | A kernel-level CPU/IO optimization driver that reacts to screen state, charging status, and thermal state, with suspend-awareness and hotplug-safe QoS handling. | [t.me/Koneko_dev](https://t.me/Koneko_dev) |
 | NTSync | High-performance synchronization primitives compatible with Windows NT kernel API. | [WildKernels/kernel_patches](https://github.com/WildKernels/kernel_patches/tree/main/common/ntsync) |
 | Performance Tuning | Kernel configuration and tuning options | [WildKernels/kernel_patches](https://github.com/WildKernels/kernel_patches/tree/main/common) |
+
+---
+
+## Governor
+| Feature | Description | Source |
+|---------|-------------|--------|
+| Governor Reflex | A schedutil-based governor extension that blends real idle-time CPU busy% (measured from kcpustat counters) with PELT utilization to get a faster-reacting "hispeed floor" without abandoning PELT's proportional scaling. | Masahito Suzuko |
+| Governor Vorpal | A schedutil-derived governor built around switching cleanly between sustained gaming load and everyday power-efficient use, with per-cluster tuning on tri-cluster (Little/Big/Prime) SoCs. | Templar Dev (Steambot12) |
+| Governor Bara-no-Seidou | A schedutil-derived governor built in-house for this kernel, tuned specifically for dual-cluster (Little/Big) SM6225-class SoCs. | [t.me/Koneko_dev](https://t.me/Koneko_dev)|
 
 ---
 
