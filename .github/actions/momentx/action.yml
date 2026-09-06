@@ -68,10 +68,18 @@ runs:
 
     - name: 'Inject MomenToMoiX SELinux Rules'
       shell: bash
-      working-directory: ${{ github.workspace }}/kernel/common/drivers/kernelsu
+      working-directory: ${{ github.workspace }}/kernel/common
       run: |
         set -euo pipefail
-        patch -p2 --forward < "${{ github.action_path }}/patches/tenebrion/tenebrion.patch"
-
-        echo "✅ Inject MomenToMoiX SELinux Rules successfully."
-
+        SELINUX_PATCH_PATH="${{ github.action_path }}/patches/tenebrion/selinux.sh"
+        cp "$SELINUX_PATCH_PATH" ./selinux.sh
+        chmod +x ./selinux.sh
+        RULES_FILE=$(find -L drivers/kernelsu -type f -name "rules.c" 2>/dev/null | head -1)
+        if [[ -z "$RULES_FILE" ]]; then
+          RULES_FILE=$(grep -rl "ksu_allow" . --include="rules.c" 2>/dev/null | head -1)
+        fi
+        if [[ -z "$RULES_FILE" ]]; then
+          exit 1
+        fi
+        export SELINUX_RULES_C="$RULES_FILE"
+        ./selinux.sh
