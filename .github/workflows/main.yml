@@ -45,11 +45,14 @@ on:
         description: "Kernel Branding"
         type: string
         default: Wild
+<<<<<<< HEAD
       release_tag:
         description: "Release Tag (e.g., r1, r2, etc.)"
         type: string
         required: true
         default: ""
+=======
+>>>>>>> 0807a4255bfb65e95839444777bd2bd51551e20d
       commit_mode:
         description: "latest = branch tips, verified = audited pins, update = build latest then promote verified pins on success"
         required: false
@@ -1256,6 +1259,69 @@ jobs:
         pattern: '*NoMount-Metamodule'
         merge-multiple: false
 
+    - name: Download AnyKernel3 (5.10 android13)
+      uses: actions/download-artifact@v7
+      with:
+        path: release-assets
+        pattern: '5.10.*-android13-*-AnyKernel3'
+        merge-multiple: false
+
+    - name: Download AnyKernel3 (5.15 android13)
+      uses: actions/download-artifact@v7
+      with:
+        path: release-assets
+        pattern: '5.15.*-android13-*-AnyKernel3'
+        merge-multiple: false
+
+    - name: Download AnyKernel3 (5.15 android14)
+      uses: actions/download-artifact@v7
+      with:
+        path: release-assets
+        pattern: '5.15.*-android14-*-AnyKernel3'
+        merge-multiple: false
+
+    - name: Download AnyKernel3 (6.1 android14)
+      uses: actions/download-artifact@v7
+      with:
+        path: release-assets
+        pattern: '6.1.*-android14-*-AnyKernel3'
+        merge-multiple: false
+
+    - name: Download AnyKernel3 (6.6 android15)
+      uses: actions/download-artifact@v7
+      with:
+        path: release-assets
+        pattern: '6.6.*-android15-*-AnyKernel3'
+        merge-multiple: false
+
+    - name: Download AnyKernel3 (6.12 android16)
+      uses: actions/download-artifact@v7
+      with:
+        path: release-assets
+        pattern: '6.12.*-android16-*-AnyKernel3'
+        merge-multiple: false
+
+    - name: Verify all AnyKernel3 artifacts downloaded
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        expected=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?per_page=100" --paginate --jq '.artifacts[].name' | grep -c '\-AnyKernel3$')
+        got=$(ls -d release-assets/*-AnyKernel3 2>/dev/null | wc -l)
+        echo "AnyKernel3 artifacts in run: $expected, downloaded: $got"
+        if [ "$got" -ne "$expected" ]; then
+          echo "ERROR: downloaded $got of $expected AnyKernel3 artifacts" >&2
+          exit 1
+        fi
+
+    - name: Download NoMount metamodule
+      uses: actions/download-artifact@v7
+      with:
+        path: release-assets
+        pattern: '*NoMount-Metamodule'
+        merge-multiple: false
+        if-no-files-found: ignore
+
     - name: Zip AnyKernel3 for Release
       run: |
         set -e
@@ -1359,6 +1425,10 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
+<<<<<<< HEAD
+=======
+
+>>>>>>> 0807a4255bfb65e95839444777bd2bd51551e20d
       - name: Download release notes preview
         uses: actions/download-artifact@v7
         with:

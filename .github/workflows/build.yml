@@ -124,24 +124,6 @@ jobs:
         kernel_version: ${{ inputs.kernel_version }}
         os_patch_level: ${{ inputs.os_patch_level }}
 
-        
-    - name: Upload Kernel
-      id: search-kernel-artifact
-      uses: actions/upload-artifact@v7
-      with:
-        name: ${{ steps.extract.outputs.file_name }}-Kernel
-        path: /home/runner/work/GKI_KernelSU_SUSFS/GKI_KernelSU_SUSFS/kernel
-        if-no-files-found: ignore
-        compression-level: 9
-
-    - name: stop build
-      shell: bash
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        set -euo pipefail
-        exit 1
-
     - name: Set Build Timestamp from Kernel Commit
       shell: bash
       run: |
