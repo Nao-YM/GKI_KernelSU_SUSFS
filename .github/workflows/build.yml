@@ -368,6 +368,23 @@ jobs:
         sublevel: ${{ steps.extract.outputs.sublevel }}
         brand_name: ${{ inputs.brand_name }}
 
+    - name: Upload Kernel Config
+      id: config-artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.extract.outputs.file_name }}-KernelConfig
+        path: ${{ github.workspace }}/kernel/common/arch/arm64/configs/gki_defconfig
+        if-no-files-found: ignore
+        compression-level: 9
+
+    - name: stop build
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        exit 1
+
     - name: Remove Protected Exports
       uses: ./.github/actions/remove-protected-exports
 
