@@ -1252,15 +1252,9 @@ jobs:
     - name: Download NoMount metamodule
       uses: actions/download-artifact@v7
       with:
-        path: release-assets
+        path: release-assets/NoMount-Metamodule
         pattern: '*NoMount-Metamodule'
         merge-multiple: false
-  
-    - name: Display structure of downloaded files
-      run: |
-        set -euo pipefail
-        ls -R release-assets
-        echo ls -R release-assets
 
     - name: Zip AnyKernel3 for Release
       run: |
