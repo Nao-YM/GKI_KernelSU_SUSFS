@@ -1245,27 +1245,13 @@ jobs:
         path: release-assets
         pattern: '*NoMount-Metamodule'
         merge-multiple: false
-        archive: false
-
+  
     - name: Zip AnyKernel3 for Release
       run: |
         set -e
         shopt -s nullglob
 
         for dir in release-assets/*-AnyKernel3; do
-          zip_name="${dir}.zip"
-          rm -f "$zip_name"
-          cd "$dir"
-          zip -r -q -9 "../$(basename "$zip_name")" .
-          cd - >/dev/null
-        done
-
-    - name: Zip NoMount Metamodule for Release
-      run: |
-        set -e
-        shopt -s nullglob
-
-        for dir in release-assets/*NoMount-Metamodule; do
           zip_name="${dir}.zip"
           rm -f "$zip_name"
           cd "$dir"
@@ -1350,7 +1336,6 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
-
       - name: Download release notes preview
         uses: actions/download-artifact@v7
         with:
