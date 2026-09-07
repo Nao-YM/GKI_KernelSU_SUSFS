@@ -1239,6 +1239,16 @@ jobs:
           exit 1
         fi
 
+    - name: Download AnyKernel3 (5.15 android14)
+      uses: actions/download-artifact@v7
+      with:
+        path: release-assets
+        pattern: '5.15.*-android14-*-AnyKernel3'
+        merge-multiple: false
+
+    - name: Display structure of downloaded files
+      run: ls -R release-assets
+
     - name: Download NoMount metamodule
       uses: actions/download-artifact@v7
       with:
@@ -1246,12 +1256,31 @@ jobs:
         pattern: '*NoMount-Metamodule'
         merge-multiple: false
   
+    - name: Display structure of downloaded files
+      run: |
+        set -euo pipefail
+        ls -R release-assets
+        echo ls -R release-assets
+
     - name: Zip AnyKernel3 for Release
       run: |
         set -e
         shopt -s nullglob
 
         for dir in release-assets/*-AnyKernel3; do
+          zip_name="${dir}.zip"
+          rm -f "$zip_name"
+          cd "$dir"
+          zip -r -q -9 "../$(basename "$zip_name")" .
+          cd - >/dev/null
+        done
+
+    - name: Zip NoMount Metamodule for Release
+      run: |
+        set -e
+        shopt -s nullglob
+
+        for dir in release-assets/*NoMount-Metamodule; do
           zip_name="${dir}.zip"
           rm -f "$zip_name"
           cd "$dir"
