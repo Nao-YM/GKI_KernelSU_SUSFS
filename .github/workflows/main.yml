@@ -45,14 +45,11 @@ on:
         description: "Kernel Branding"
         type: string
         default: Wild
-<<<<<<< HEAD
       release_tag:
         description: "Release Tag (e.g., r1, r2, etc.)"
         type: string
         required: true
         default: ""
-=======
->>>>>>> 0807a4255bfb65e95839444777bd2bd51551e20d
       commit_mode:
         description: "latest = branch tips, verified = audited pins, update = build latest then promote verified pins on success"
         required: false
@@ -1317,7 +1314,7 @@ jobs:
     - name: Download NoMount metamodule
       uses: actions/download-artifact@v7
       with:
-        path: release-assets
+        path: release-assets/NoMount-Metamodule
         pattern: '*NoMount-Metamodule'
         merge-multiple: false
         if-no-files-found: ignore
@@ -1425,10 +1422,6 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
-<<<<<<< HEAD
-=======
-
->>>>>>> 0807a4255bfb65e95839444777bd2bd51551e20d
       - name: Download release notes preview
         uses: actions/download-artifact@v7
         with:
