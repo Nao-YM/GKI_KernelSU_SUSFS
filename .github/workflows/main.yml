@@ -1107,10 +1107,10 @@ jobs:
         # Extract git tag at the sync point
         KSU_GIT_TAG=$(git describe --tags --abbrev=0 "$STOCK_COMMIT" 2>/dev/null || echo "no-tag")
 
-        MANAGER_RUN_ID=$(curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/actions/workflows/build-manager-ci.yml/runs?head_sha=${STOCK_COMMIT}" | jq -r '.workflow_runs[0].id // empty')
+        MANAGER_RUN_ID=$(curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/actions/workflows/build-manager-ci.yml/runs?head_sha=e801e16b515e0c7be7c2eb6ca8be4d63551d4786 | jq -r '.workflow_runs[0].id // empty')
         if [[ -n "${MANAGER_RUN_ID:-}" ]]; then
           KSU_MANAGER="https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/e801e16b515e0c7be7c2eb6ca8be4d63551d4786"
-          KSU_MANAGER_NOTE="built from stock dev commit ${STOCK_COMMIT:0:12} (exact match)"
+          KSU_MANAGER_NOTE="built from stock dev commit ${e801e16b515e0c7be7c2eb6ca8be4d63551d4786:0:12} (exact match)"
         else
           # Validated up-front in resolve-sources; a release cannot proceed without
           # the exact manager run. Fail rather than link a mismatched manager.
