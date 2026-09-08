@@ -1410,7 +1410,7 @@ jobs:
 
   notes-preview:
     if: always() && github.event_name == 'workflow_dispatch'
-    needs: [resolve-sources, build-android12-5-10, build-android13-5-10, build-android13-5-15, build-android14-5-15, build-android14-6-1, build-android15-6-6, build-android16-6-12, release]
+    needs: [resolve-sources, build-android12-5-10, build-android13-5-10, build-android13-5-15, build-android14-5-15, build-android14-6-1, build-android15-6-6, build-android16-6-12]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
