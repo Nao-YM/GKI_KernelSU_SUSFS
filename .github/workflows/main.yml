@@ -1109,7 +1109,7 @@ jobs:
 
         MANAGER_RUN_ID=$(curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/actions/workflows/build-manager-ci.yml/runs?head_sha=${STOCK_COMMIT}" | jq -r '.workflow_runs[0].id // empty')
         if [[ -n "${MANAGER_RUN_ID:-}" ]]; then
-          KSU_MANAGER="https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/${MANAGER_RUN_ID}"
+          KSU_MANAGER="https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/e801e16b515e0c7be7c2eb6ca8be4d63551d4786"
           KSU_MANAGER_NOTE="built from stock dev commit ${STOCK_COMMIT:0:12} (exact match)"
         else
           # Validated up-front in resolve-sources; a release cannot proceed without
