@@ -58,8 +58,6 @@ runs:
 
     - name: Enable SUSFS Kernel Configs
       uses: ./.github/actions/susfs-config
-      with:
-        nomount_enabled: ${{ inputs.nomount_enabled }}
 
     - name: Apply SUSFS Patches
       uses: ./.github/actions/susfs-patches
