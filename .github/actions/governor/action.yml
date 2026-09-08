@@ -28,6 +28,11 @@ runs:
           printf "\t  touch-boost smoothing, and PSI-aware tuning.\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
         fi
 
+        DEFCONFIG_GKI="$TARGET_DIR/arch/arm64/configs/gki_defconfig"
+        if [ -f "$DEFCONFIG_GKI" ] && ! grep -q "CONFIG_CPU_FREQ_GOV_BARA_NO_SEIDOU" "$DEFCONFIG_GKI"; then
+          echo "CONFIG_CPU_FREQ_GOV_BARA_NO_SEIDOU=y" >> "$DEFCONFIG_GKI"
+        fi
+
         if ! grep -q "cpufreq_bara_no_seidou.o" "$TARGET_DIR/kernel/sched/Makefile"; then
           echo "ERROR: failed to wire cpufreq_bara_no_seidou.o into sched/Makefile" >&2
           exit 1
@@ -60,6 +65,13 @@ runs:
           printf "\t  featuring idle-time accounting and PELT-complementary exponential decay.\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
         fi
 
+        DEFCONFIG_GKI="$TARGET_DIR/arch/arm64/configs/gki_defconfig"
+        if [ -f "$DEFCONFIG_GKI" ]; then
+          if ! grep -q "CONFIG_CPU_FREQ_GOV_REFLEX" "$DEFCONFIG_GKI"; then
+            echo "CONFIG_CPU_FREQ_GOV_REFLEX=y" >> "$DEFCONFIG_GKI"
+          fi
+        fi
+
     - name: 'Inject Vorpal Governor + GKI510 Compat'
       shell: bash
       run: |
@@ -86,6 +98,11 @@ runs:
           printf "\thelp\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
           printf "\t  'vorpal' is a schedutil-based governor tuned for\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
           printf "\t  gaming/thermal-aware dual-profile operation.\n" >> "$TARGET_DIR/drivers/cpufreq/Kconfig"
+        fi
+
+        DEFCONFIG_GKI="$TARGET_DIR/arch/arm64/configs/gki_defconfig"
+        if [ -f "$DEFCONFIG_GKI" ] && ! grep -q "CONFIG_CPU_FREQ_GOV_VORPAL" "$DEFCONFIG_GKI"; then
+          echo "CONFIG_CPU_FREQ_GOV_VORPAL=y" >> "$DEFCONFIG_GKI"
         fi
 
     - name: 'Fix Vorpal Input-Handler Init Bug'
@@ -153,11 +170,3 @@ runs:
             exit 1
           fi
         done
-
-    - name: Enable Kernel Configs
-      uses: ./.github/actions/set-kernel-config
-      with:
-        config_list: |
-          CONFIG_CPU_FREQ_GOV_BARA_NO_SEIDOU=y
-          CONFIG_CPU_FREQ_GOV_REFLEX=y
-          CONFIG_CPU_FREQ_GOV_VORPAL=y
