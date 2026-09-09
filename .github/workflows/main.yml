@@ -72,10 +72,6 @@ on:
         description: "SUSFS"
         type: boolean
         default: true
-      use_nomount:
-        description: "NoMount"
-        type: boolean
-        default: true
       use_bbg:
         description: "Baseband Guard"
         type: boolean
@@ -292,7 +288,7 @@ jobs:
           done
 
           # Tracked build helpers (resolved automatically, before the run)
-          emit kernel_patches_commit "$(resolve_sha https://github.com/WildKernels/kernel_patches.git refs/heads/main)"
+          emit kernel_patches_commit "$(resolve_sha https://github.com/Nao-YM/kernel_patches.git refs/heads/main)"
           emit anykernel3_commit   "$(resolve_sha https://github.com/WildKernels/AnyKernel3.git refs/heads/gki-2.0)"
           emit droidspaces_commit  "$(resolve_sha https://github.com/ravindu644/Droidspaces-OSS.git refs/heads/main)"
 
@@ -416,7 +412,7 @@ jobs:
 
           FEATURES=""
           [ "${{ inputs.use_susfs }}" = "true" ] && FEATURES="${FEATURES}SUSFS+"
-          [ "${{ inputs.use_nomount }}" = "true" ] && FEATURES="${FEATURES}NoMount+"
+          FEATURES="${FEATURES}NoMount+"
           [ "${{ inputs.use_bbg }}" = "true" ] && FEATURES="${FEATURES}BBG+"
           [ "${{ inputs.use_net }}" = "true" ] && FEATURES="${FEATURES}NET+"
           [ "${{ inputs.use_ds }}" = "true" ] && FEATURES="${FEATURES}DS+"
@@ -428,7 +424,7 @@ jobs:
           echo "feature_set=${FEATURES%+}" >> "$GITHUB_OUTPUT"
 
       - name: Clone shared source repos once
-        if: inputs.use_nomount && !inputs.test_release_notes
+        if: ${{ !inputs.test_release_notes }}
         shell: bash
         run: |
           set -euo pipefail
@@ -585,11 +581,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        if: inputs.use_nomount
 
       - name: Clone NoMount source at pinned commit
         id: clone
-        if: inputs.use_nomount
         shell: bash
         run: |
           set -euo pipefail
@@ -602,14 +596,12 @@ jobs:
           echo "commit=${COMMIT}" >> "$GITHUB_OUTPUT"
 
       - name: Build NoMount metamodule (nm only, no .ko)
-        if: inputs.use_nomount
         id: buildmod
         uses: ./.github/actions/nomount-metamodule
         with:
           commit: ${{ steps.clone.outputs.commit }}
 
       - name: Upload NoMount metamodule
-        if: inputs.use_nomount
         uses: actions/upload-artifact@v7
         with:
           name: NoMount-Metamodule
@@ -856,7 +848,7 @@ jobs:
         NOMOUNT_SHA: ${{ needs.resolve-sources.outputs.nomount_commit }}
         KERNELSU_SHA: ${{ needs.resolve-sources.outputs.ksu_commit }}
         RESUKISU_SHA: ${{ needs.resolve-sources.outputs.resukisu_commit }}
-        APPROVE_NOMOUNT: ${{ inputs.use_nomount }}
+        APPROVE_NOMOUNT: true
         APPROVE_KERNELSU: ${{ (inputs.root_flavor == 'KernelSU' || inputs.root_flavor == 'All') }}
         APPROVE_RESUKISU: ${{ (inputs.root_flavor == 'ReSukiSU' || inputs.root_flavor == 'All') }}
 
@@ -1239,85 +1231,12 @@ jobs:
           exit 1
         fi
 
-    - name: Download AnyKernel3 (5.15 android14)
-      uses: actions/download-artifact@v7
-      with:
-        path: release-assets
-        pattern: '5.15.*-android14-*-AnyKernel3'
-        merge-multiple: false
-
-    - name: Display structure of downloaded files
-      run: ls -R release-assets
-
     - name: Download NoMount metamodule
       uses: actions/download-artifact@v7
       with:
         path: release-assets/NoMount-Metamodule
         pattern: '*NoMount-Metamodule'
         merge-multiple: false
-
-    - name: Download AnyKernel3 (5.10 android13)
-      uses: actions/download-artifact@v7
-      with:
-        path: release-assets
-        pattern: '5.10.*-android13-*-AnyKernel3'
-        merge-multiple: false
-
-    - name: Download AnyKernel3 (5.15 android13)
-      uses: actions/download-artifact@v7
-      with:
-        path: release-assets
-        pattern: '5.15.*-android13-*-AnyKernel3'
-        merge-multiple: false
-
-    - name: Download AnyKernel3 (5.15 android14)
-      uses: actions/download-artifact@v7
-      with:
-        path: release-assets
-        pattern: '5.15.*-android14-*-AnyKernel3'
-        merge-multiple: false
-
-    - name: Download AnyKernel3 (6.1 android14)
-      uses: actions/download-artifact@v7
-      with:
-        path: release-assets
-        pattern: '6.1.*-android14-*-AnyKernel3'
-        merge-multiple: false
-
-    - name: Download AnyKernel3 (6.6 android15)
-      uses: actions/download-artifact@v7
-      with:
-        path: release-assets
-        pattern: '6.6.*-android15-*-AnyKernel3'
-        merge-multiple: false
-
-    - name: Download AnyKernel3 (6.12 android16)
-      uses: actions/download-artifact@v7
-      with:
-        path: release-assets
-        pattern: '6.12.*-android16-*-AnyKernel3'
-        merge-multiple: false
-
-    - name: Verify all AnyKernel3 artifacts downloaded
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        set -euo pipefail
-        expected=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?per_page=100" --paginate --jq '.artifacts[].name' | grep -c '\-AnyKernel3$')
-        got=$(ls -d release-assets/*-AnyKernel3 2>/dev/null | wc -l)
-        echo "AnyKernel3 artifacts in run: $expected, downloaded: $got"
-        if [ "$got" -ne "$expected" ]; then
-          echo "ERROR: downloaded $got of $expected AnyKernel3 artifacts" >&2
-          exit 1
-        fi
-
-    - name: Download NoMount metamodule
-      uses: actions/download-artifact@v7
-      with:
-        path: release-assets/NoMount-Metamodule
-        pattern: '*NoMount-Metamodule'
-        merge-multiple: false
-        if-no-files-found: ignore
 
     - name: Zip AnyKernel3 for Release
       run: |
@@ -1346,13 +1265,12 @@ jobs:
         done
 
     - name: Verify NoMount metamodule zip
-      if: inputs.use_nomount
       run: |
         set -euo pipefail
         # The metamodule silently missed r20 (artifact built fine, no zip
         # on the release). Fail loud instead of shipping without it.
         if ! ls release-assets/NoMount-Metamodule.zip >/dev/null 2>&1; then
-          echo "ERROR: use_nomount is true but release-assets/NoMount-Metamodule.zip is missing" >&2
+          echo "ERROR: release-assets/NoMount-Metamodule.zip is missing" >&2
           ls release-assets/ >&2
           exit 1
         fi
@@ -1413,46 +1331,6 @@ jobs:
         done
         exit "$failed"
 
-  nightly-release:
-    if: always() && github.event_name == 'workflow_dispatch' && !inputs.test_release_notes && inputs.release_type == 'Action'
-    needs: [notes-preview]
-    runs-on: ubuntu-latest
-    concurrency:
-      group: nightly-release-${{ github.ref }}
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v7
-      - name: Download release notes preview
-        uses: actions/download-artifact@v7
-        with:
-          name: release-notes-preview
-          path: nightly
-          if-no-files-found: error
-
-      - name: Append nightly.link URL
-        run: |
-          {
-            echo ""
-            echo "- **Nightly artifacts:** https://nightly.link/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            echo "- **Note:** not every kernel version is necessarily built in a nightly run — the link above lists exactly what this run produced."
-          } >> nightly/release_body.md
-          cat nightly/release_body.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Replace nightly prerelease
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -e
-          gh release delete nightly --cleanup-tag -y || true
-          if git ls-remote --tags origin nightly | grep -q 'refs/tags/nightly'; then
-            git push --delete origin nightly || true
-          fi
-          gh release create nightly \
-            --target "${{ github.sha }}" \
-            --prerelease \
-            --title "Nightly (${{ github.ref_name }} $(date -u +%Y-%m-%d))" \
-            --notes-file nightly/release_body.md
-
   notes-preview:
     if: always() && github.event_name == 'workflow_dispatch'
     needs: [resolve-sources, build-android12-5-10, build-android13-5-10, build-android13-5-15, build-android14-5-15, build-android14-6-1, build-android15-6-6, build-android16-6-12]
@@ -1466,7 +1344,6 @@ jobs:
           MANAGER_LIST: ${{ needs.resolve-sources.outputs.manager_list }}
           ROOT_MATRIX: ${{ needs.resolve-sources.outputs.root_matrix }}
           USE_SUSFS: ${{ inputs.use_susfs }}
-          USE_NOMOUNT: ${{ inputs.use_nomount }}
           USE_BBG: ${{ inputs.use_bbg }}
           USE_DS: ${{ inputs.use_ds }}
           USE_NET: ${{ inputs.use_net }}
@@ -1510,7 +1387,7 @@ jobs:
           root = env("ROOT_FLAVOR","All")
           feats=[]
           if env("USE_SUSFS","true")=="true": feats.append("SUSFS")
-          if env("USE_NOMOUNT","true")=="true": feats.append("NoMount")
+          feats.append("NoMount")
           if env("USE_BBG","true")=="true": feats.append("Baseband Guard")
           if env("USE_DS","true")=="true": feats.append("DroidSpaces-OSS")
           if env("USE_NET","true")=="true": feats.append("Networking")
