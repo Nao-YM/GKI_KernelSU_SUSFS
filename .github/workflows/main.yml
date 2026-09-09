@@ -1092,7 +1092,7 @@ jobs:
 
         OFFICIAL_KSU_REPO="https://github.com/KernelSU-Next/KernelSU-Next.git"
         retry git fetch "$OFFICIAL_KSU_REPO" dev
-        STOCK_COMMIT="88feb688d6afdcaf791eff3c4ea3ccc67cd89075"
+        STOCK_COMMIT=$(git merge-base HEAD FETCH_HEAD)
         echo "KSU Stock Commit (official sync point): $STOCK_COMMIT"
 
         # Extract version info - anchored to the official sync point
