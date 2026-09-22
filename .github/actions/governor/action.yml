@@ -161,4 +161,4 @@ runs:
           CONFIG_CPU_FREQ_GOV_BARA_NO_SEIDOU=y
           CONFIG_CPU_FREQ_GOV_REFLEX=y
           CONFIG_CPU_FREQ_GOV_VORPAL=y
-          
+
