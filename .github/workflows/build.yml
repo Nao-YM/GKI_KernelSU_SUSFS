@@ -556,7 +556,7 @@ jobs:
         github_token: ${{ github.token }}
 
     - name: Build Bypass Kernel
-      if: inputs.build_bypass
+      if: inputs.bypass
       env:
         SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
         KBUILD_BUILD_TIMESTAMP: ${{ env.KBUILD_BUILD_TIMESTAMP }}
@@ -843,6 +843,6 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.extract.outputs.file_name }}-BuildInfo
-        path: /tmp/build-summary-${{ env.SUMMARY_BASE }}.md
+        path: /tmp/build-summary-${SUMMARY_BASE}.md
         if-no-files-found: warn
         compression-level: 9

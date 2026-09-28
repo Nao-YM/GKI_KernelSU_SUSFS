@@ -952,7 +952,7 @@ jobs:
         KERNELSU_SHA: ${{ needs.resolve-sources.outputs.ksu_commit }}
         RESUKISU_SHA: ${{ needs.resolve-sources.outputs.resukisu_commit }}
         SUKISU_ULTRA_SHA: ${{ needs.resolve-sources.outputs.sukisu_ultra_commit }}
-        APPROVE_NOMOUNT: ${{ inputs.use_nomount }}
+        APPROVE_NOMOUNT: true
         APPROVE_KERNELSU: ${{ (inputs.root_flavor == 'KernelSU' || inputs.root_flavor == 'All') }}
         APPROVE_RESUKISU: ${{ (inputs.root_flavor == 'ReSukiSU' || inputs.root_flavor == 'All') }}
         APPROVE_SUKISU_ULTRA: ${{ inputs.root_flavor == 'SukiSU-Ultra' }}
