@@ -593,10 +593,12 @@ jobs:
 
       - name: Assemble LKM bootstrap (like upstream ksud.yml)
         if: steps.gate.outputs.run == 'true'
+        env:
+          SRC_DIR: ${{ env.SRC_DIR }}
         shell: bash
         run: |
           set -euo pipefail
-          dir="${SRC_DIR}"
+          dir="${{ env.SRC_DIR }}"
           cd "$dir"
           if [ -f userspace/ksud/src/lkm_image_bootstrap.S ]; then
             clang --target=aarch64-linux-gnu -c -nostdlib -o userspace/ksud/.lkm_image_bootstrap.o userspace/ksud/src/lkm_image_bootstrap.S 2>&1 | tail -20 || echo "lkm bootstrap optional"

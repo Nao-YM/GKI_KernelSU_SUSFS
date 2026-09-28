@@ -840,9 +840,11 @@ jobs:
         } >> "$summary_file"
 
     - name: Upload Build Summary + Metadata
+      env:
+        SUMMARY_BASE: ${{ env.SUMMARY_BASE }}
       uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.extract.outputs.file_name }}-BuildInfo
-        path: /tmp/build-summary-${SUMMARY_BASE}.md
+        path: /tmp/build-summary-$${{ env.SUMMARY_BASE }}.md
         if-no-files-found: warn
         compression-level: 9
