@@ -20,6 +20,7 @@ Generic kernels built on [Google's GKI sources](https://android.googlesource.com
 
 ## Features
 
+### Wild Kernels for Android devices running GKI 2.0 (5.10+)
 - **KernelSU / KernelSU-Next / ReSukiSU** — root implementations
 - **susfs4ksu** — root hiding (incl. Ptrace Leak Fix, Unicode Fix)
 - **NoMount / Mountify** — mount metamodules
@@ -29,6 +30,13 @@ Generic kernels built on [Google's GKI sources](https://android.googlesource.com
 - **BPF** — BTF / eBPF / FUSE-BPF
 - **Performance** — incl. NTSync
 - **DroidSpaces** — container runtime
+
+### From MomenToMoiX GKI Kernel
+- **MomenToMoiX Driver** — A kernel-level CPU/IO optimization driver that reacts to screen state, charging status, and thermal state, with suspend-awareness and hotplug-safe QoS handling.
+- **Governor Reflex** — A schedutil-based governor extension that blends real idle-time CPU busy% (measured from kcpustat counters
+- **Governor Vorpal** — Vorpal v2.0 — Perfect Gaming & Thermal Edition, a schedutil-derived governor built around switching cleanly between sustained gaming load and everyday power-efficient use, with per-cluster tuning on tri-cluster (Little/Big/Prime) SoCs.
+- **Governor Bara-no-Seidou** — A schedutil-derived governor built in-house for this kernel, tuned specifically for dual-cluster (Little/Big) SM6225-class SoCs. Named after Malice Mizer's Bara no Seidou.
+
 
 > [!TIP]
 > Full documentation: [Wiki](https://github.com/WildKernels/GKI_KernelSU_SUSFS/wiki)
@@ -76,6 +84,11 @@ See **[Installation Guide](https://github.com/WildKernels/GKI_KernelSU_SUSFS/wik
 - **AnyKernel3** — [osm0sis](https://github.com/osm0sis/AnyKernel3)
 - **Sultan Kernels (Pixel)** — [kerneltoast](https://github.com/kerneltoast)
 - **Device Boot Fix** — [Boot fix commit](https://github.com/Anything-at-25-00/android_kernel_common_android12-5.10/commit/2476d262b597fe8af82cfb7aaf96676f51c6b4ed)
+- **Tenebrion logic** — [Kanagawa Yamada](https://github.com/LoggingNewMemory)
+- **Masahito Suzuki** — Masahito Suzuki
+- **Vorpal Governor** — Templar Dev (Steambot12)
+- **MomenToMoiX Driver, Bara-no-Seidou Governor** — [@koneko_dev](https://github.com/kusonekoworld-max/MomenToMoiX-Kernel-GKI)
+
 
 **Contributors to this repository:**
 
