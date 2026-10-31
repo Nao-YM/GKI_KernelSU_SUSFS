@@ -1718,7 +1718,7 @@ jobs:
       - name: Download NoMount metamodule
         uses: actions/download-artifact@v7
         with:
-          path: release-assets
+          path: release-assets/NoMount-Metamodule
           pattern: "*NoMount-Metamodule"
           merge-multiple: false
 
