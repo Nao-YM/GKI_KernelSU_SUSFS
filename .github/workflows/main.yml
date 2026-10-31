@@ -1444,38 +1444,19 @@ jobs:
         id: tag
         if: inputs.release_type != 'CI'
         run: |
-          mapfile -t RELEASE_TAGS < <(gh api --paginate "repos/${{ github.repository }}/tags?per_page=100" --jq '.[].name' 2>/dev/null | grep -E '^r[0-9]+$' || true)
-
-          LATEST_REV=0
-          for TAG in "${RELEASE_TAGS[@]}"; do
-            REV="${TAG#r}"
-            if [[ "$REV" =~ ^[0-9]+$ && "$REV" -gt "$LATEST_REV" ]]; then
-              LATEST_REV="$REV"
-            fi
-          done
-
-          if [[ "$LATEST_REV" -gt 0 ]]; then
-            NEW_TAG="r$((LATEST_REV + 1))"
-          else
-            NEW_TAG="r1"
-          fi
-
-          if [[ ${#RELEASE_TAGS[@]} -gt 0 ]]; then
-            echo "Latest r-tag: r${LATEST_REV}"
-          else
-            echo "No existing r-tags found; starting at r1"
-          fi
+          NEW_TAG="${{ inputs.release_tag }}"
           echo "New tag: $NEW_TAG"
-          echo "NEW_TAG=${NEW_TAG}" >> "$GITHUB_ENV"
-          echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
 
       - name: Set Release Title
         id: release_meta
         run: |
           set -euo pipefail
 
-          # Format release title: convert rN -> Release N
-          if [[ "${NEW_TAG}" =~ ^r([0-9]+)$ ]]; then
+          # Format release title: convert RN -> Release N
+          if [[ "${NEW_TAG}" =~ ^R([0-9]+.*$) ]]; then
             REV_NUM="${BASH_REMATCH[1]}"
             release_title="Release ${REV_NUM}"
           else
