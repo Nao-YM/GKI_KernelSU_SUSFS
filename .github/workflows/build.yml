@@ -353,6 +353,12 @@ jobs:
         uses: ./.github/actions/unicode-fix
         with:
           kernel_version: ${{ inputs.kernel_version }}
+          
+      - name: Inject MomenToMoiX Drivers
+        uses: ./.github/actions/momentx
+        
+      - name: Add Governors
+        uses: ./.github/actions/governor
 
       - name: Apply Performance Patches
         uses: ./.github/actions/performance
