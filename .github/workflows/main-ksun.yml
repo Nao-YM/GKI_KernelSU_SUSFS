@@ -1,5 +1,4 @@
-name: Build Kernels
-
+name: Build Kernels KernelSU-Next (SUSFS) ONLY
 permissions:
   contents: write
   actions: write
