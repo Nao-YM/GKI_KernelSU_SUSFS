@@ -27,7 +27,7 @@ on:
         description: "Kernel Version"
         type: choice
         options:
-          - All
+          # - All
           # - 5.10.x-android12
           # - 5.10.x-android13
           - 5.15.x-android13
@@ -35,7 +35,7 @@ on:
           # - 6.1.x-android14
           # - 6.6.x-android15
           # - 6.12.x-android16
-        default: All
+        default: 5.15.x-android13
       os_patch_level:
         description: "Patch date (YYYY-MM), kernel sublevel, lts, or All (no filter)"
         required: true
@@ -82,7 +82,7 @@ on:
           # - FinaSU
           # - No Root
           - All (KernelSU-Next + KernelSU)
-        default: KernelSU-Next
+        default: All (KernelSU-Next + KernelSU)
       use_susfs:
         description: "SUSFS"
         type: boolean
