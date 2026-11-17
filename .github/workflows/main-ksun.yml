@@ -1,4 +1,4 @@
-name: Build Kernels KernelSU-Next (SUSFS) ONLY
+name: Build Kernels KernelSU's (SUSFS) ONLY
 permissions:
   contents: write
   actions: write
@@ -27,7 +27,7 @@ on:
         description: "Kernel Version"
         type: choice
         options:
-          # - All
+          - All
           # - 5.10.x-android12
           # - 5.10.x-android13
           - 5.15.x-android13
@@ -76,12 +76,12 @@ on:
         options:
           - KernelSU-Next
           - KernelSU
-          - BakaSU
-          - SukiSU-Ultra
-          - KowSU
-          - FinaSU
-          - No Root
-          - All (KernelSU-Next + KernelSU + BakaSU)
+          # - BakaSU
+          # - SukiSU-Ultra
+          # - KowSU
+          # - FinaSU
+          # - No Root
+          - All (KernelSU-Next + KernelSU)
         default: KernelSU-Next
       use_susfs:
         description: "SUSFS"
@@ -383,7 +383,7 @@ jobs:
           # label the "All" arm matches below — a bare 'All' fell through to *)
           # and failed the whole job, yet the manager step's All* glob still
           # matched, so the two steps disagreed. Keep these in sync.
-          case "${{ inputs.root_flavor || 'All (KernelSU-Next + KernelSU + BakaSU)' }}" in
+          case "${{ inputs.root_flavor || 'All (KernelSU-Next + KernelSU)' }}" in
             KernelSU)
               echo "root_flavor=kernelsu" >> "$GITHUB_OUTPUT"
               emit root_commit "$KERNELSU_COMMIT"
@@ -428,9 +428,9 @@ jobs:
               ROOT_MATRIX='[{"root_flavor":"none","variant":"NoRoot","root_commit":""}]'
               ROOT_MATRIX="[$(mk_entry none NoRoot "" true)]"
               ;;
-            "All (KernelSU-Next + KernelSU + BakaSU)")
+            "All (KernelSU-Next + KernelSU)")
               # Fan out to all three root variants, each with its pinned commit.
-              ROOT_MATRIX="[$(mk_entry next KernelSU-Next "$NEXT_COMMIT" true),$(mk_entry kernelsu KernelSU "$KERNELSU_COMMIT" false),$(mk_entry bakasu BakaSU "$BAKASU_COMMIT" false)]"
+              ROOT_MATRIX="[$(mk_entry next KernelSU-Next "$NEXT_COMMIT" true),$(mk_entry kernelsu KernelSU "$KERNELSU_COMMIT" false)]"
               echo "root_flavor=" >> "$GITHUB_OUTPUT"
               echo "root_commit=" >> "$GITHUB_OUTPUT"
               ;;
@@ -476,7 +476,7 @@ jobs:
         uses: ./.github/actions/resolve-managers
         with:
           root_flavor: ${{ inputs.root_flavor }}
-          all_flavors: next,kernelsu,bakasu
+          all_flavors: next,kernelsu
           allow_fallback: 'true'
           next_commit: ${{ steps.resolve.outputs.kernelsu_commit }}
           finasu_commit: ${{ steps.resolve.outputs.finasu_commit }}
