@@ -155,10 +155,9 @@ runs:
         done
 
     - name: Enable Governors
-      uses: ./.github/actions/set-kernel-config
-      with:
-        config_list: |
-          CONFIG_CPU_FREQ_GOV_BARA_NO_SEIDOU=y
-          CONFIG_CPU_FREQ_GOV_REFLEX=y
-          CONFIG_CPU_FREQ_GOV_VORPAL=y
-
+      shell: bash
+      working-directory: ${{ github.workspace }}/kernel/common
+      run: |
+        python3 "${{ github.workspace }}/.github/scripts/append_fragment.py" \
+          "${{ github.workspace }}/.github/actions/governor/enable-governor-kernel-configs.fragment" \
+          --dest wild_defconfig.fragment --label enable-governor-kernel-configs

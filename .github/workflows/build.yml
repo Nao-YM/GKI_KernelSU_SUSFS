@@ -21,11 +21,6 @@ on:
       os_patch_level:
         required: true
         type: string
-      runner:
-        description: 'Runner image label (ubuntu-24.04 or ubuntu-latest); lets a single leg be A/B tested'
-        required: false
-        type: string
-        default: 'ubuntu-24.04'
       variant:
         required: false
         type: string
@@ -76,11 +71,6 @@ on:
         required: false
         type: boolean
         default: false
-      use_cache:
-        description: "Enable ccache/bazel cache (restore/save via release buckets)"
-        required: false
-        type: boolean
-        default: false
       page_size:
         description: "ARM64 page size: 4k (default) or 16k (Kleaf --page_size)"
         required: false
@@ -95,7 +85,7 @@ on:
 jobs:
   build-gki:
     name: "${{ inputs.kernel_version }}.${{ inputs.sublevel }}-${{ inputs.android_version }}-${{ inputs.os_patch_level }} (${{ inputs.variant }})"
-    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
       - name: Checkout Repository
@@ -110,30 +100,10 @@ jobs:
           path: stock-configs
 
       - name: Validate Page Size
-        shell: bash
-        run: |
-          set -euo pipefail
-          PAGE_SIZE="${{ inputs.page_size }}"
-          case "$PAGE_SIZE" in
-            4k) exit 0 ;;
-            16k) ;;
-            *) echo "ERROR: unsupported page_size '$PAGE_SIZE' (expected 4k or 16k)." >&2; exit 1 ;;
-          esac
-          # Kleaf exposes --page_size only on the build branches used by these
-          # GKI families (main-kernel-build-2023/2024, main-kernel-2025).
-          case "${{ inputs.version }}" in
-            android14-6.1|android15-6.6|android16-6.12) ;;
-            *)
-              echo "ERROR: page_size=16k is not supported for ${{ inputs.version }}." >&2
-              echo "Supported families: android14-6.1, android15-6.6, android16-6.12." >&2
-              exit 1
-              ;;
-          esac
-
-      - name: Emergency Disk Cleanup
-        if: false
-        uses: ./.github/actions/disk-cleanup
-
+        uses: ./.github/actions/validate-page-size
+        with:
+          page_size: ${{ inputs.page_size }}
+          version: ${{ inputs.version }}
       - name: Free Disk Space
         if: true
         uses: endersonmenezes/free-disk-space@v4 # Use @main for latest, @v3 for stable
@@ -143,7 +113,7 @@ jobs:
           remove_haskell: true
           remove_tool_cache: true
           remove_swap: true
-          remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*"
+          remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox"
           remove_packages_one_command: true
           remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az* /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli /usr/share/gradle"
           rm_cmd: "rmz" # Use 'rmz' for faster deletion (default: 'rm')
@@ -171,6 +141,8 @@ jobs:
           kernel_version: ${{ inputs.kernel_version }}
           os_patch_level: ${{ inputs.os_patch_level }}
 
+      - name: Initialize Config Fragment
+        uses: ./.github/actions/initialize-config-fragment
       - name: Spoof /proc/config.gz With Stock Config
         uses: ./.github/actions/stock-config
         with:
@@ -179,32 +151,9 @@ jobs:
           stock_config_dir: stock-configs
 
       - name: Set Build Timestamp from Kernel Commit
-        shell: bash
-        run: |
-          set -x
-          # Hardcode the build timestamp to the 5th day of the patch level
-          # at 04:20 UTC, using the existing timestamp formats expected by the build.
-          OS_PATCH_LEVEL_INPUT="${{ inputs.os_patch_level }}"
-          if [[ "$OS_PATCH_LEVEL_INPUT" == lts* ]]; then
-            if [[ "$OS_PATCH_LEVEL_INPUT" =~ ^lts-([0-9]{2})$ ]]; then
-              OS_PATCH_LEVEL_YM="$(date -u +%Y)-${BASH_REMATCH[1]}"
-            else
-              OS_PATCH_LEVEL_YM="$(date -u +%Y-%m)"
-            fi
-          else
-            OS_PATCH_LEVEL_YM="$OS_PATCH_LEVEL_INPUT"
-          fi
-          FIXED_BUILD_DATE="${OS_PATCH_LEVEL_YM}-05 04:20:00 UTC"
-          SOURCE_DATE_EPOCH=$(date -u -d "$FIXED_BUILD_DATE" +%s)
-          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> $GITHUB_ENV
-          KBUILD_TS=$(date -u -d @${SOURCE_DATE_EPOCH} '+%a %b %d %H:%M:%S UTC %Y')
-          echo "KBUILD_BUILD_TIMESTAMP=${KBUILD_TS}" >> $GITHUB_ENV
-          # Keep git metadata aligned with the same fixed timestamp.
-          GIT_DATE=$(date -u -d @${SOURCE_DATE_EPOCH} '+%Y-%m-%dT%H:%M:%SZ')
-          echo "GIT_COMMITTER_DATE=${GIT_DATE}" >> $GITHUB_ENV
-          echo "GIT_AUTHOR_DATE=${GIT_DATE}" >> $GITHUB_ENV
-          echo "Build timestamp set to: $(date -u -d @${SOURCE_DATE_EPOCH} '+%Y-%m-%d %H:%M:%S UTC') (epoch: $SOURCE_DATE_EPOCH)"
-
+        uses: ./.github/actions/set-build-timestamp-from-kernel-commit
+        with:
+          os_patch_level: ${{ inputs.os_patch_level }}
       - name: Extract Sublevel and Set File Name
         id: extract
         uses: ./.github/actions/extract-sublevel-file-name
@@ -225,23 +174,19 @@ jobs:
           sublevel: ${{ steps.extract.outputs.sublevel }}
           os_patch_level: ${{ inputs.os_patch_level }}
 
-      - name: Reject KowSU with SUSFS
-        if: inputs.root_flavor == 'kowsu' && (contains(inputs.feature_set, 'SUSFS') || inputs.feature_set == 'All')
+      - name: Reject incompatible root/SUSFS combinations
+        # One step for both: these are a single guard, and splitting them only
+        # added two composite actions whose whole body was one echo.
+        if: (inputs.root_flavor == 'kowsu' && (contains(inputs.feature_set, 'SUSFS') || inputs.feature_set == 'All')) || (inputs.root_flavor == 'finasu' && !contains(inputs.feature_set, 'SUSFS'))
         shell: bash
         run: |
-          echo "ERROR: KowSU does not work together with SUSFS — re-run with SUSFS off." >&2
+          set -euo pipefail
+          if [ "${{ inputs.root_flavor }}" = "kowsu" ]; then
+            echo "ERROR: KowSU does not work together with SUSFS - re-run with SUSFS off." >&2
+          else
+            echo "ERROR: FinaSU requires SUSFS - re-run with SUSFS on." >&2
+          fi
           exit 1
-
-      - name: Reject FinaSU without SUSFS
-        # FinaSU's kernel hard-depends on the susfs headers and its supercall
-        # dispatch references susfs symbols unguarded, so a susfs-less build
-        # cannot link. Unlike KernelSU/BakaSU there is no susfs-free shape.
-        if: inputs.root_flavor == 'finasu' && !contains(inputs.feature_set, 'SUSFS')
-        shell: bash
-        run: |
-          echo "ERROR: FinaSU requires SUSFS — re-run with SUSFS on." >&2
-          exit 1
-
       - name: Setup Selected Root Implementation
         if: inputs.root_flavor != '' && inputs.root_flavor != 'none'
         uses: ./.github/actions/root-setup
@@ -251,47 +196,54 @@ jobs:
 
       - name: Mark No Root build metadata
         if: inputs.root_flavor == 'none'
-        shell: bash
-        run: |
-          {
-            echo "ROOT_IMPLEMENTATION=none"
-            echo "ROOT_MANAGER=N/A"
-            echo "ROOT_VERSION=N/A"
-            echo "ROOT_COMMIT=N/A"
-          } >> "$GITHUB_ENV"
-
+        uses: ./.github/actions/mark-no-root-build-metadata
+        with:
+          root_flavor: ${{ inputs.root_flavor }}
       - name: Disable SUSFS for BakaSU without SUSFS feature
         if: inputs.root_flavor == 'bakasu' && !contains(inputs.feature_set, 'SUSFS')
-        uses: ./.github/actions/set-kernel-config
-        with:
-          config_list: |
-            CONFIG_KSU_SUSFS=n
-            CONFIG_KSU_SUSFS_SUS_PATH=n
-            CONFIG_KSU_SUSFS_SUS_MOUNT=n
-            CONFIG_KSU_SUSFS_SUS_KSTAT=n
-            CONFIG_KSU_SUSFS_SPOOF_UNAME=n
-            CONFIG_KSU_SUSFS_ENABLE_LOG=n
-            CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=n
-            CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=n
-            CONFIG_KSU_SUSFS_OPEN_REDIRECT=n
-            CONFIG_KSU_SUSFS_SUS_MAP=n
-
+        shell: bash
+        working-directory: ${{ github.workspace }}/kernel/common
+        run: |
+          python3 "${{ github.workspace }}/.github/scripts/append_fragment.py" \
+            "${{ github.workspace }}/.github/fragments/disable-susfs-for-bakasu-without-susfs-feature.fragment" \
+            --dest wild_defconfig.fragment --label disable-susfs-for-bakasu-without-susfs-feature
       - name: Disable SUSFS for SukiSU-Ultra without SUSFS feature
         if: inputs.root_flavor == 'sukisu-ultra' && !contains(inputs.feature_set, 'SUSFS')
-        uses: ./.github/actions/set-kernel-config
+        shell: bash
+        working-directory: ${{ github.workspace }}/kernel/common
+        run: |
+          python3 "${{ github.workspace }}/.github/scripts/append_fragment.py" \
+            "${{ github.workspace }}/.github/fragments/disable-susfs-for-sukisu-ultra-without-susfs-feature.fragment" \
+            --dest wild_defconfig.fragment --label disable-susfs-for-sukisu-ultra-without-susfs-feature
+      - name: Single manager for BakaSU (multi-manager off)
+        if: inputs.root_flavor == 'bakasu'
+        shell: bash
+        working-directory: ${{ github.workspace }}/kernel/common
+        run: |
+          python3 "${{ github.workspace }}/.github/scripts/append_fragment.py" \
+            "${{ github.workspace }}/.github/fragments/single-manager-for-bakasu-multi-manager-off.fragment" \
+            --dest wild_defconfig.fragment --label single-manager-for-bakasu-multi-manager-off
+      - name: Enable KernelSU toolkit support for BakaSU
+        if: inputs.root_flavor == 'bakasu'
+        shell: bash
+        working-directory: ${{ github.workspace }}/kernel/common
+        run: |
+          python3 "${{ github.workspace }}/.github/scripts/append_fragment.py" \
+            "${{ github.workspace }}/.github/fragments/enable-kernelsu-toolkit-support-for-bakasu.fragment" \
+            --dest wild_defconfig.fragment --label enable-kernelsu-toolkit-support-for-bakasu
+      - name: Single manager for SukiSU-Ultra (trim cert table)
+        if: inputs.root_flavor == 'sukisu-ultra'
+        uses: ./.github/actions/single-manager-for-sukisu-ultra-trim-cert-table
         with:
-          config_list: |
-            CONFIG_KSU_SUSFS=n
-            CONFIG_KSU_SUSFS_SUS_PATH=n
-            CONFIG_KSU_SUSFS_SUS_MOUNT=n
-            CONFIG_KSU_SUSFS_SUS_KSTAT=n
-            CONFIG_KSU_SUSFS_SPOOF_UNAME=n
-            CONFIG_KSU_SUSFS_ENABLE_LOG=n
-            CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=n
-            CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=n
-            CONFIG_KSU_SUSFS_OPEN_REDIRECT=n
-            CONFIG_KSU_SUSFS_SUS_MAP=n
-
+          root_flavor: ${{ inputs.root_flavor }}
+      - name: Single manager for FinaSU (dynamic manager off)
+        if: inputs.root_flavor == 'finasu'
+        shell: bash
+        working-directory: ${{ github.workspace }}/kernel/common
+        run: |
+          python3 "${{ github.workspace }}/.github/scripts/append_fragment.py" \
+            "${{ github.workspace }}/.github/fragments/single-manager-for-finasu-dynamic-manager-off.fragment" \
+            --dest wild_defconfig.fragment --label single-manager-for-finasu-dynamic-manager-off
       - name: SUSFS
         # One step, one action: resolve the SUSFS commit, apply it for the
         # selected root, then run the post-patch fixes (ksu_close_fd restore,
@@ -334,6 +286,33 @@ jobs:
           os_patch_level: ${{ inputs.os_patch_level }}
           droidspaces_commit: ${{ inputs.droidspaces_commit }}
 
+      - name: USB Arsenal Patches
+        # USB gadget functions (mass storage, HID, NCM) plus the kernel-patches
+        # folder that makes a second gadget instance and CD-ROM/DVD emulation work.
+        # 6.1 has no patch set of its own upstream, so it takes the 5.15 one.
+        if: contains(inputs.feature_set, 'USBA') || inputs.feature_set == 'All'
+        id: usba
+        uses: ./.github/actions/usb-arsenal
+        with:
+          version: ${{ inputs.version }}
+          kernel_version: ${{ inputs.kernel_version }}
+
+      - name: Record the USB Arsenal source commit
+        # Feeds the notes and the build metadata; without it a kernel with USB
+        # Arsenal is indistinguishable from one without.
+        if: contains(inputs.feature_set, 'USBA') || inputs.feature_set == 'All'
+        shell: bash
+        run: echo "USBA_COMMIT=${{ steps.usba.outputs.commit }}" >> "$GITHUB_ENV"
+
+      # ON BY DEFAULT, and it is NOT free - measured, not assumed. Enabling it
+      # changes struct cfs_rq (cfs_bandwidth, throttled lists, throttled_count),
+      # and struct rq embeds struct cfs_rq. struct rq * appears in the prototypes
+      # of exported symbols - the android vendor-hook tracepoints
+      # (__traceiter_android_rvh_*), __task_rq_lock, __migrate_task,
+      # __balance_callbacks - so genksyms expands it and their CRCs move. That
+      # is what the "breaks the ABI" note was about; include/ has no
+      # CONFIG_CFS_BANDWIDTH reference at all, which is why grepping headers
+      # misses it.
       - name: Apply NTSync Patches
         if: contains(inputs.feature_set, 'NTSync')
         uses: ./.github/actions/ntsync
@@ -367,6 +346,9 @@ jobs:
           kernel_version: ${{ inputs.kernel_version }}
 
       - name: Setup Misc Configs
+        # Gateable now: this is a baseline, not a requirement. Features that do need
+        # overlayfs or tmpfs xattr carry those configs in their own fragments.
+        if: contains(inputs.feature_set, 'Misc') || inputs.feature_set == 'All'
         uses: ./.github/actions/misc
         with:
           version: ${{ inputs.version }}
@@ -375,13 +357,19 @@ jobs:
           sublevel: ${{ steps.extract.outputs.sublevel }}
           variant: ${{ inputs.variant }}
 
-      - name: Enable BPF Stack (BTF + eBPF + FUSE-BPF)
-        if: contains(inputs.feature_set, 'BPF')
-        uses: ./.github/actions/btf
-        with:
-          version: ${{ inputs.version }}
-          kernel_version: ${{ inputs.kernel_version }}
-          sublevel: ${{ steps.extract.outputs.sublevel }}
+      # DISABLED: the BPF stack (BTF + eBPF + FUSE-BPF) is off until there is a
+      # concrete need for it. Most of it is already in stock GKI (BPF_SYSCALL,
+      # DEBUG_INFO_BTF, FUSE_FS are =y on 5.15+), so the action was mainly adding
+      # BPF_EVENTS/kprobe/uprobe events and FUSE_BPF - tracing plumbing and an
+      # experimental FUSE-over-eBPF path that nothing here uses - at the cost of build
+      # time and extra config surface. If you require it, open an issue.
+      # - name: Enable BPF Stack (BTF + eBPF + FUSE-BPF)
+      #   if: contains(inputs.feature_set, 'BPF')
+      #   uses: ./.github/actions/btf
+      #   with:
+      #     version: ${{ inputs.version }}
+      #     kernel_version: ${{ inputs.kernel_version }}
+      #     sublevel: ${{ steps.extract.outputs.sublevel }}
 
       - name: Apply Device-Specific Patches
         uses: ./.github/actions/apply-device-patches
@@ -427,55 +415,6 @@ jobs:
           if-no-files-found: ignore
           compression-level: 9
 
-      - name: "Setup Cache and Build Environment"
-        if: inputs.use_cache
-        uses: ./.github/actions/cache-setup
-        with:
-          version: ${{ inputs.version }}
-          android_version: ${{ inputs.android_version }}
-          kernel_version: ${{ inputs.kernel_version }}
-          sublevel: ${{ steps.extract.outputs.sublevel }}
-
-      - name: Restore ccache
-        id: restore-ccache
-        continue-on-error: true
-        if: inputs.use_cache && (inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15')
-        uses: ./.github/actions/cache-restore
-        with:
-          cache_path: /home/runner/.ccache
-          cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}-${{ inputs.variant }}
-          cache_bucket: ccache-cache-${{ inputs.version }}-${{ inputs.variant }}
-          restore_keys: |
-            ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
-
-      - name: Restore bazel-cache
-        id: restore-bazel
-        continue-on-error: true
-        if: inputs.use_cache && (inputs.version == 'android14-5.15' || inputs.version == 'android14-6.1' || inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12')
-        uses: ./.github/actions/cache-restore
-        with:
-          cache_path: /home/runner/.cache/bazel
-          cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}-${{ inputs.variant }}${{ inputs.page_size == '16k' && '-16k' || '' }}
-          cache_bucket: bazel-cache-${{ inputs.version }}-${{ inputs.variant }}${{ inputs.page_size == '16k' && '-16k' || '' }}
-          restore_keys: |
-            ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
-
-      - name: Check cache hit
-        run: |
-          echo "Cache restore status:"
-          CCACHE_HIT="${{ steps.restore-ccache.outputs.cache-hit || 'skipped' }}"
-          BAZEL_HIT="${{ steps.restore-bazel.outputs.cache-hit || 'skipped' }}"
-          echo "  ccache: $CCACHE_HIT"
-          echo "  bazel: $BAZEL_HIT"
-
-      - name: Get Cache Stats
-        uses: ./.github/actions/cache-stats
-        with:
-          clear_stats: true
-
-      - name: Initialize Config Fragment
-        run: touch "${{ github.workspace }}/wild_gki.fragment"
-
       - name: Apply Kernel Bypass Hack
         if: ${{ inputs.allow_version_mismatch == 'true' }}
         uses: ./.github/actions/bypass-kernel
@@ -487,50 +426,26 @@ jobs:
         env:
           SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
           KBUILD_BUILD_TIMESTAMP: ${{ env.KBUILD_BUILD_TIMESTAMP }}
-          KBUILD_BUILD_USER: ${{ (inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12') && 'kleaf' || 'build-user' }}
+          KBUILD_BUILD_USER: ${{ (inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12' || inputs.version == 'android17-6.18') && 'kleaf' || 'build-user' }}
           KBUILD_BUILD_HOST: build-host
         uses: ./.github/actions/build-kernel
         with:
           version: ${{ inputs.version }}
           page_size: ${{ inputs.page_size }}
 
-      - name: Get Cache Stats
-        uses: ./.github/actions/cache-stats
+      - name: ABI gate
+        # Compares Module.symvers CRCs against the stock ABI of the tree that was
+        # built and fails on any symbol whose CRC moved.
+        uses: ./.github/actions/abi-gate
         with:
-          clear_stats: false
+          version: ${{ inputs.version }}
+          date: ${{ inputs.os_patch_level }}
 
-      - name: Prune ccache before save
-        if: always() && inputs.use_cache && (inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15')
-        shell: bash
-        run: |
-          if [ -d /home/runner/.ccache ]; then
-            ccache -c 2>/dev/null || true
-            find /home/runner/.ccache -type f -mtime +0.5 -delete 2>/dev/null || true
-            find /home/runner/.ccache -type d -empty -delete 2>/dev/null || true
-            echo "ccache pruned"; ccache -s 2>/dev/null | head -20 || true
-          fi
-
-      - name: Save ccache
-        continue-on-error: true
-        uses: ./.github/actions/cache-save
-        if: always() && inputs.use_cache && (inputs.version == 'android12-5.10' || inputs.version == 'android13-5.10' || inputs.version == 'android13-5.15')
-        with:
-          cache_path: /home/runner/.ccache
-          cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}-${{ inputs.variant }}
-          cache_bucket: "ccache-cache-${{ inputs.version }}-${{ inputs.variant }}"
-          compression_level: 9
-          github_token: ${{ github.token }}
-
-      - name: Save bazel-cache
-        continue-on-error: true
-        uses: ./.github/actions/cache-save
-        if: always() && inputs.use_cache && (inputs.version == 'android14-5.15' || inputs.version == 'android14-6.1' || inputs.version == 'android15-6.6' || inputs.version == 'android16-6.12')
-        with:
-          cache_path: /home/runner/.cache/bazel
-          cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}-${{ inputs.variant }}${{ inputs.page_size == '16k' && '-16k' || '' }}
-          cache_bucket: "bazel-cache-${{ inputs.version }}-${{ inputs.variant }}${{ inputs.page_size == '16k' && '-16k' || '' }}"
-          compression_level: 9
-          github_token: ${{ github.token }}
+      - name: Extract the built .config
+        if: always()
+        uses: ./.github/actions/extract-the-built-config
+      - name: Verify the fragment landed in .config
+        uses: ./.github/actions/verify-fragment
 
       - name: Consolidated Build Summary
         id: build-summary
@@ -575,6 +490,8 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.extract.outputs.file_name }}-BuildInfo
-          path: /tmp/build-summary-${{ steps.build-summary.outputs.summary_base }}.md
+          path: |
+            /tmp/build-summary-${{ steps.build-summary.outputs.summary_base }}.md
+            ${{ github.workspace }}/built.config
           if-no-files-found: warn
           compression-level: 9
